@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const useFetch = () => {
     const [response, setResponse] = useState({});
@@ -37,16 +37,9 @@ const useFetch = () => {
                                         ...prevState,
                                         [currentFunc?.id || i]: data,
                                     }));
-
-                                    if (options.length - 1 === i) {
-                                        setIsLoading(false);
-                                    }
                                     return Promise.resolve(data);
                                 } catch (err) {
                                     //console.log('Received text');
-                                    if (options.length - 1 === i) {
-                                        setIsLoading(false);
-                                    }
                                     if (!res.ok) {
                                         return Promise.reject();
                                     }
@@ -57,20 +50,22 @@ const useFetch = () => {
                         if (typeof currentFunc.func === 'function') {
                             currentFunc.func(data);
                         }
-                        if (options.length - 1 === i) {
-                            setIsLoading(false);
-                        }
                         return Promise.resolve(data);
                     }
                 });
             }, Promise.resolve())
             .catch(err => {
+                console.log(err);
                 setResponse(false);
                 setError({ error: true, msg: err });
+            })
+            .finally(() => {
                 setIsLoading(false);
             });
 
-        return () => controller.abort();
+        return () => {
+            controller.abort();
+        };
     }, [isLoading, options]);
 
     return { response, error, isLoading, doFetch };

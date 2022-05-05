@@ -1,14 +1,19 @@
 {
-    "name": "usefetch",
+    "name": "@josipp/use-fetch",
     "version": "1.0.0",
-    "description": "useFetch hook for multiple sequential requests",
+    "description": "Simple useFetch hook for sequential requests",
     "main": "index.js",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "keywords": [],
+    "keywords": [
+        "react",
+        "custom-hook"
+    ],
     "author": "Josip Popovic",
     "license": "ISC",
+    "private": false,
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/JP876/use-fetch.git"
+    },
     "peerDependencies": {
         "react": "^18.1.0",
         "react-dom": "^18.1.0"
