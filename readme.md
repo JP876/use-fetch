@@ -27,6 +27,17 @@ const fetchJSONUsers = signal => {
     });
 };
 
+const fetchJSONCreateResource = (data, signal) => {
+    return fetch('https://jsonplaceholder.typicode.com/posts', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+            'Content-type': 'application/json; charset=UTF-8',
+        },
+        signal,
+    });
+};
+
 function App() {
     const [users, setUsers] = useState(null);
     const {
@@ -38,11 +49,16 @@ function App() {
 
     useEffect(() => {
         doFetch([
+            // for api requsets, info is required
             { func: fetchJSONPosts, info: [], id: 'posts' },
             // id is key in response object, it is optional
             { func: fetchJSONUsers, info: [] },
             // you can also set to another state manager, like redux
             { func: data => setUsers(data) },
+            {
+                func: fetchJSONCreateResource,
+                info: [{ title: 'test', body: 'test', userId: 2 }],
+            },
         ]);
     }, [doFetch]);
 
@@ -63,6 +79,8 @@ function App() {
             <p>{JSON.stringify(response[1])}</p>
             <br />
             <p>{JSON.stringify(users)}</p>
+            <br />
+            <p>{JSON.stringify(response[3])}</p>
         </>
     );
 }
