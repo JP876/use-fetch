@@ -12,7 +12,7 @@ npm i @josipp/use-fetch
 
 ```jsx
 import { useEffect, useState } from 'react';
-import useFetch from './useFetch';
+import useFetch from '@josipp/use-fetch';
 
 const baseUrl = 'https://jsonplaceholder.typicode.com';
 

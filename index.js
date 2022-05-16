@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 
+const handleFormData = data => {
+    return Object.keys(data).reduce((formData, key) => {
+        formData.append(key, data[key]);
+        return formData;
+    }, new FormData());
+};
+
 const useFetch = () => {
     const [response, setResponse] = useState({});
     const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +31,10 @@ const useFetch = () => {
                     if (currentFunc?.url) {
                         let options = currentFunc?.options;
                         let { url } = currentFunc;
+
+                        if (currentFunc?.formData) {
+                            options.data = handleFormData(options.data);
+                        }
 
                         if (!currentFunc.options) {
                             options = {};
