@@ -5,38 +5,16 @@
 ## Install
 
 ```bash
-npm install @josipp/use-fetch
+npm i @josipp/use-fetch
 ```
 
 ## Usage
 
 ```jsx
 import { useEffect, useState } from 'react';
-import useFetch from '@josipp/useFetch';
+import useFetch from './useFetch';
 
-const fetchJSONPosts = signal => {
-    return fetch('https://jsonplaceholder.typicode.com/posts', {
-        signal,
-    });
-};
-
-// signal is last argument
-const fetchJSONUsers = signal => {
-    return fetch('https://jsonplaceholder.typicode.com/users', {
-        signal,
-    });
-};
-
-const fetchJSONCreateResource = (data, signal) => {
-    return fetch('https://jsonplaceholder.typicode.com/posts', {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: {
-            'Content-type': 'application/json; charset=UTF-8',
-        },
-        signal,
-    });
-};
+const baseUrl = 'https://jsonplaceholder.typicode.com';
 
 function App() {
     const [users, setUsers] = useState(null);
@@ -49,15 +27,22 @@ function App() {
 
     useEffect(() => {
         doFetch([
-            // for api requsets, info is required
-            { func: fetchJSONPosts, info: [], id: 'posts' },
             // id is key in response object, it is optional
-            { func: fetchJSONUsers, info: [] },
-            // you can also set to another state manager, like redux
+            // options are also optional
+            { url: `${baseUrl}/posts`, id: 'posts' },
+            { url: `${baseUrl}/users`, options: { method: 'GET' } },
+            // you can also set to another state manager, like redux or do something else
+            // with data
             { func: data => setUsers(data) },
             {
-                func: fetchJSONCreateResource,
-                info: [{ title: 'test', body: 'test', userId: 2 }],
+                url: `${baseUrl}/posts`,
+                options: {
+                    method: 'POST',
+                    body: JSON.stringify({ title: 'test', body: 'test', userId: 2 }),
+                    headers: {
+                        'Content-type': 'application/json; charset=UTF-8',
+                    },
+                },
             },
         ]);
     }, [doFetch]);
