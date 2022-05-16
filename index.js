@@ -21,11 +21,15 @@ const useFetch = () => {
         options
             .reduce((promiseChain, currentFunc, i) => {
                 return promiseChain.then(data => {
-                    try {
-                        let info = [...currentFunc.info, controller.signal];
+                    if (currentFunc?.url) {
+                        let options = currentFunc?.options;
+                        let { url } = currentFunc;
 
-                        return currentFunc.func
-                            .apply(this, info)
+                        if (!currentFunc.options) {
+                            options = {};
+                        }
+
+                        return fetch(url, { ...options, signal: controller.signal })
                             .then(res => Promise.all([res.text(), res]))
                             .then(([text, res]) => {
                                 try {
@@ -46,10 +50,8 @@ const useFetch = () => {
                                     return Promise.resolve();
                                 }
                             });
-                    } catch (err) {
-                        if (typeof currentFunc.func === 'function') {
-                            currentFunc.func(data);
-                        }
+                    } else if (typeof currentFunc?.func === 'function') {
+                        currentFunc.func(data);
                         return Promise.resolve(data);
                     }
                 });
