@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-const handleFormData = data => {
-    return Object.keys(data).reduce((formData, key) => {
-        formData.append(key, data[key]);
-        return formData;
-    }, new FormData());
-};
+const isArrayEmpty = arr => Array.isArray(arr) && arr.length === 0;
 
 const useFetch = () => {
     const [response, setResponse] = useState({});
@@ -13,34 +8,19 @@ const useFetch = () => {
     const [error, setError] = useState({ error: false, msg: null });
     const [options, setOptions] = useState({});
 
-    const doFetch = useCallback(options => {
-        if (Array.isArray(options) && options.length !== 0) {
-            setOptions(options);
-            setIsLoading(true);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (!isLoading) return;
-
-        let controller = new AbortController();
-
-        options
+    const handleReduce = useCallback((optionsArr, signal) => {
+        return optionsArr
             .reduce((promiseChain, currentFunc, i) => {
                 return promiseChain.then(data => {
                     if (currentFunc?.url) {
                         let options = currentFunc?.options;
                         let { url } = currentFunc;
 
-                        if (currentFunc?.formData) {
-                            options.data = handleFormData(options.data);
-                        }
-
                         if (!currentFunc.options) {
                             options = {};
                         }
 
-                        return fetch(url, { ...options, signal: controller.signal })
+                        return fetch(url, { ...options, signal })
                             .then(res => Promise.all([res.text(), res]))
                             .then(([text, res]) => {
                                 try {
@@ -62,8 +42,13 @@ const useFetch = () => {
                                 }
                             });
                     } else if (typeof currentFunc?.func === 'function') {
-                        currentFunc.func(data);
-                        return Promise.resolve(data);
+                        const additionalOptions = currentFunc.func(data);
+
+                        if (!additionalOptions) {
+                            return Promise.resolve();
+                        } else if (!isArrayEmpty(additionalOptions)) {
+                            handleReduce(additionalOptions, signal);
+                        }
                     }
                 });
             }, Promise.resolve())
@@ -71,15 +56,25 @@ const useFetch = () => {
                 console.log(err);
                 setResponse(false);
                 setError({ error: true, msg: err });
-            })
-            .finally(() => {
-                setIsLoading(false);
             });
+    }, []);
 
-        return () => {
-            controller.abort();
-        };
-    }, [isLoading, options]);
+    const doFetch = useCallback(options => {
+        if (!isArrayEmpty(options)) {
+            setOptions(options);
+            setIsLoading(true);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!isLoading) return;
+
+        let controller = new AbortController();
+
+        handleReduce(options, controller.signal).finally(() => setIsLoading(false));
+
+        return () => controller.abort();
+    }, [isLoading, options, handleReduce]);
 
     return { response, error, isLoading, doFetch };
 };
