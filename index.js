@@ -32,6 +32,9 @@ const useFetch = () => {
                                         ...prevState,
                                         [currentFunc?.id || i]: data,
                                     }));
+                                    if (options.length - 1 === i) {
+                                        setIsLoading(false);
+                                    }
                                     return Promise.resolve(data);
                                 } catch (err) {
                                     //console.log('Received text');
@@ -42,18 +45,18 @@ const useFetch = () => {
                                 }
                             });
                     } else if (typeof currentFunc?.func === 'function') {
-                        const additionalOptions = currentFunc.func(data);
-
-                        if (!additionalOptions) {
-                            return Promise.resolve();
-                        } else if (!isArrayEmpty(additionalOptions)) {
-                            handleReduce(additionalOptions, signal);
+                        if (options.length - 1 === i) {
+                            setIsLoading(false);
                         }
+                        if (typeof currentFunc.func === 'function') {
+                            currentFunc.func(data);
+                        }
+                        return Promise.resolve(data);
                     }
                 });
             }, Promise.resolve())
             .catch(err => {
-                console.log(err);
+                setIsLoading(false);
                 setResponse(false);
                 setError({ error: true, msg: err });
             });
@@ -71,7 +74,7 @@ const useFetch = () => {
 
         let controller = new AbortController();
 
-        handleReduce(options, controller.signal).finally(() => setIsLoading(false));
+        handleReduce(options, controller.signal);
 
         return () => controller.abort();
     }, [isLoading, options, handleReduce]);
