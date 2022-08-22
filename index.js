@@ -66,6 +66,8 @@ const useFetch = () => {
         if (!isArrayEmpty(options)) {
             setOptions(options);
             setIsLoading(true);
+            setError({ error: false, msg: null });
+            setResponse({});
         }
     }, []);
 
