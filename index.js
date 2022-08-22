@@ -25,6 +25,7 @@ const useFetch = () => {
                             .then(([text, res]) => {
                                 try {
                                     let data = JSON.parse(text);
+
                                     if (!res.ok) {
                                         return Promise.reject(data);
                                     }
@@ -32,9 +33,10 @@ const useFetch = () => {
                                         ...prevState,
                                         [currentFunc?.id || i]: data,
                                     }));
-                                    if (options.length - 1 === i) {
+                                    if (optionsArr.length - 1 === i) {
                                         setIsLoading(false);
                                     }
+
                                     return Promise.resolve(data);
                                 } catch (err) {
                                     //console.log('Received text');
@@ -45,7 +47,7 @@ const useFetch = () => {
                                 }
                             });
                     } else if (typeof currentFunc?.func === 'function') {
-                        if (options.length - 1 === i) {
+                        if (optionsArr.length - 1 === i) {
                             setIsLoading(false);
                         }
                         if (typeof currentFunc.func === 'function') {
