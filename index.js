@@ -52,9 +52,13 @@ const useFetch = () => {
 						if (optionsArr.length - 1 === i) {
 							setIsLoading(false);
 						}
+
 						if (data && Object.keys(data).length !== 0) {
 							currentFunc.func(data?.data, data?.res);
+						} else {
+							currentFunc.func();
 						}
+
 						return Promise.resolve(data);
 					} else {
 						if (optionsArr.length - 1 === i) {
