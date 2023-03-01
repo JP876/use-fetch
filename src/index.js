@@ -1,4 +1,4 @@
-import { FetchContext, useFetchContext } from "./fetchContetxt/useFetchContext";
-import useFetch from "./useFetch";
+import { FetchProvider, useFetchContext } from './fetchContetxt/useFetchContext';
+import useFetch from './useFetch';
 
-export { useFetch as default, FetchContext, useFetchContext };
+export { useFetch as default, FetchProvider, useFetchContext };

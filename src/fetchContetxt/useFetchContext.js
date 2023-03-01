@@ -1,15 +1,27 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, useState } from 'react';
 
-export const FetchContext = createContext();
+const FetchContextState = createContext();
+const FetchContextDispatch = createContext();
 
 export const useFetchContext = () => {
-	const context = useContext(FetchContext);
+    const state = useContext(FetchContextState);
+    const dispatch = useContext(FetchContextDispatch);
 
-	if (!context) {
-		throw new Error(
-			"useFetch hook should be wrapped with FetchContext provider"
-		);
-	}
+    if (!(state || dispatch)) {
+        throw new Error('useFetch hook should be wrapped with FetchContext provider');
+    }
 
-	return context;
+    return [state, dispatch];
+};
+
+export const FetchProvider = ({ children }) => {
+    const [isOnline, setIsOnline] = useState(true);
+
+    return (
+        <FetchContextState.Provider value={{ isOnline }}>
+            <FetchContextDispatch.Provider value={{ setIsOnline }}>
+                {children}
+            </FetchContextDispatch.Provider>
+        </FetchContextState.Provider>
+    );
 };
