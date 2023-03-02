@@ -13,7 +13,11 @@ const TestContainer = () => {
         response,
         error: { error, msg },
     } = useFetch();
-    const { doFetch: fetchTest, isLoading: testLoading } = useFetch({
+    const {
+        doFetch: fetchTest,
+        isLoading: testLoading,
+        error: { msg: testMsg },
+    } = useFetch({
         checkConnnection: true,
     });
 
@@ -50,13 +54,6 @@ const TestContainer = () => {
         [doFetch]
     );
 
-    //useEffect(() => handleTestFetch(), [handleTestFetch]);
-
-    /* if (error) {
-        console.log(msg);
-        return <h1>Something went wrong.</h1>;
-    } */
-    console.log(response[1]);
     return (
         <>
             <button disabled={isLoading} onClick={handleTestFetch}>
@@ -76,6 +73,7 @@ const TestContainer = () => {
                     <li>Error: {error ? 'True' : 'False'}</li>
                     <li>Error message: {msg ? JSON.stringify(msg) : 'False'}</li>
                     <li>IsOnline: {state?.isOnline ? 'True' : 'False'}</li>
+                    <li>IsOnline message: {testMsg ? JSON.stringify(msg) : 'False'}</li>
                     {response?.[1] && (
                         <li>
                             <h4>Response 1:</h4>

@@ -38,11 +38,12 @@ const useFetch = ({ checkConnnection = false } = {}) => {
                 }, Promise.resolve())
                 .then(() => setIsOnline(true))
                 .catch((err) => {
+                    setResponse(false);
+
                     if (err instanceof TypeError) {
                         setIsOnline(false);
                     }
 
-                    setResponse(false);
                     setError({ error: true, msg: err });
                 })
                 .finally(() => setIsLoading(false));
