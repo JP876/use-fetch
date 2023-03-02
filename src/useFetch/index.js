@@ -11,7 +11,7 @@ const useFetch = ({ checkConnnection = false } = {}) => {
 
     const [options, setOptions] = useState({});
 
-    const [{ isOnline, checkIsOnline }, { setIsOnline }] = useFetchContext();
+    const [, { setIsOnline }] = useFetchContext();
 
     const handleReduce = useCallback(
         (optionsArr, signal) => {
@@ -51,19 +51,16 @@ const useFetch = ({ checkConnnection = false } = {}) => {
         [setIsOnline]
     );
 
-    const doFetch = useCallback(
-        (options) => {
-            if (checkIsOnline && !isOnline && !checkConnnection) return;
+    const doFetch = useCallback((options) => {
+        //if (checkIsOnline && !isOnline && !checkConnnection) return;
 
-            if (!isArrayEmpty(options)) {
-                setOptions(options);
-                setIsLoading(true);
-                setError({ error: false, msg: null });
-                setResponse({});
-            }
-        },
-        [checkIsOnline, isOnline, checkConnnection]
-    );
+        if (!isArrayEmpty(options)) {
+            setOptions(options);
+            setIsLoading(true);
+            setError({ error: false, msg: null });
+            setResponse({});
+        }
+    }, []);
 
     useEffect(() => {
         if (!isLoading) return;
