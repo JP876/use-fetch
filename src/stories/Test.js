@@ -1,8 +1,10 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { FetchProvider, useFetchContext } from '../fetchContetxt/useFetchContext';
 import useFetch from '../useFetch';
 
 const baseUrl = 'https://jsonplaceholder.typicode.com';
+const textBody =
+    'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer euismod massa sit amet ante fermentum, sed viverra justo mollis. Nunc faucibus ac elit vel interdum.';
 
 const TestContainer = () => {
     const {
@@ -11,30 +13,42 @@ const TestContainer = () => {
         response,
         error: { error, msg },
     } = useFetch();
+    const { doFetch: fetchTest, isLoading: testLoading } = useFetch({
+        checkConnnection: true,
+    });
 
-    const [state] = useFetchContext();
+    const [state, { setIsOnline }] = useFetchContext();
 
-    const handleTestFetch = useCallback((type) => {
-        const url = type === 'error' ? 'posts1' : 'posts';
+    const fetchCheck = useCallback(() => {
+        fetchTest([{ url: `${baseUrl}/posts` }, { func: () => setIsOnline(true) }]);
+    }, [fetchTest, setIsOnline]);
 
-        doFetch([
-            { url: `${baseUrl}/posts`, id: 'posts' },
-            //{ func: (data) => console.log(data) },
-            {
-                url: `${baseUrl}/${url}`,
-                options: {
-                    method: 'POST',
-                    body: JSON.stringify({ title: 'test', body: 'test', userId: 2 }),
-                    headers: {
-                        'Content-type': 'application/json; charset=UTF-8',
+    const handleTestFetch = useCallback(
+        (type) => {
+            const url = type === 'error' ? 'posts1' : 'posts';
+
+            doFetch([
+                { url: `${baseUrl}/posts` },
+                //{ func: (data) => console.log(data) },
+                {
+                    url: `${baseUrl}/${url}`,
+                    options: {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            title: 'test',
+                            body: textBody,
+                            userId: 2,
+                        }),
+                        headers: {
+                            'Content-type': 'application/json; charset=UTF-8',
+                        },
                     },
                 },
-                case: 'add post',
-            },
-            { func: (data) => console.log(data) },
-            { url: `${baseUrl}/posts`, id: 'posts' },
-        ]);
-    }, []);
+                { url: `${baseUrl}/users` },
+            ]);
+        },
+        [doFetch]
+    );
 
     //useEffect(() => handleTestFetch(), [handleTestFetch]);
 
@@ -42,30 +56,49 @@ const TestContainer = () => {
         console.log(msg);
         return <h1>Something went wrong.</h1>;
     } */
-
+    console.log(response[1]);
     return (
         <>
-            <button
-                disabled={isLoading}
-                style={{ padding: '.4rem .8rem', fontSize: '1.2rem' }}
-                onClick={handleTestFetch}
-            >
-                Test
+            <button disabled={isLoading} onClick={handleTestFetch}>
+                Test Correct
             </button>
-            <button
-                disabled={isLoading}
-                style={{ padding: '.4rem .8rem', fontSize: '1.2rem' }}
-                onClick={() => handleTestFetch('error')}
-            >
+            <button disabled={isLoading} onClick={() => handleTestFetch('error')}>
                 Test Wrong
             </button>
+
+            <button disabled={testLoading} onClick={fetchCheck}>
+                Test Connection
+            </button>
+
+            <div className="status-container">
+                <ul>
+                    <li>Loading: {isLoading ? 'True' : 'False'}</li>
+                    <li>Error: {error ? 'True' : 'False'}</li>
+                    <li>Error message: {msg ? JSON.stringify(msg) : 'False'}</li>
+                    <li>IsOnline: {state?.isOnline ? 'True' : 'False'}</li>
+                    {response?.[1] && (
+                        <li>
+                            <h4>Response 1:</h4>
+                            <p style={{ marginTop: '.4rem' }}>
+                                Title: <span>{response[1]?.title}</span>
+                            </p>
+                            <p style={{ marginTop: '.4rem' }}>
+                                Body: <span>{response[1]?.body}</span>
+                            </p>
+                            <p style={{ marginTop: '.4rem' }}>
+                                UserId: <span>{response[1]?.userId}</span>
+                            </p>
+                        </li>
+                    )}
+                </ul>
+            </div>
         </>
     );
 };
 
 const Test = () => {
     return (
-        <FetchProvider>
+        <FetchProvider options={{ checkIsOnline: true }}>
             <TestContainer />
         </FetchProvider>
     );

@@ -1,11 +1,4 @@
-const handleFetch = async ({
-    i,
-    currentFunc,
-    signal,
-    setResponse,
-    setIsLoading,
-    optionsArr,
-}) => {
+const handleFetch = async ({ currentFunc, signal, setResponse, data }) => {
     let options = currentFunc?.options;
     let { url } = currentFunc;
 
@@ -24,12 +17,8 @@ const handleFetch = async ({
                 }
                 setResponse((prevState) => ({
                     ...prevState,
-                    [currentFunc?.id || i]: data,
+                    [currentFunc?.id || Object.keys(prevState).length]: data,
                 }));
-
-                if (optionsArr.length - 1 === i) {
-                    setIsLoading(false);
-                }
 
                 return Promise.resolve({ data, res });
             } catch (err) {

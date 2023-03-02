@@ -1,0 +1,31 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.status-container {
+    margin-top: 2rem;
+    margin-left: 2rem;
+}
+
+button {
+    border: none;
+    padding: 0.4rem 1rem;
+    font-size: 1.4rem;
+    cursor: pointer;
+    margin-right: 1rem;
+}
+
+button:hover {
+    background-color: lightgray;
+}
+
+ul li {
+    font-size: 1.4rem;
+    margin-top: 0.8rem;
+}
