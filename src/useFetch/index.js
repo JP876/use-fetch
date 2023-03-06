@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFetchContext } from '../fetchContetxt/useFetchContext';
 import handleFetch from './handleFetch';
 
 const isArrayEmpty = (arr) => Array.isArray(arr) && arr.length === 0;
 
-const useFetch = ({ checkConnnection = false } = {}) => {
+const useFetch = () => {
     const [response, setResponse] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState({ error: false, msg: null });
@@ -19,8 +19,8 @@ const useFetch = ({ checkConnnection = false } = {}) => {
                 .reduce((promiseChain, currentFunc, i) => {
                     return promiseChain.then((data) => {
                         if (currentFunc?.url) {
-                            const fetchInfo = { data, currentFunc, signal, optionsArr };
-                            const dispatchInfo = { setResponse, i };
+                            const fetchInfo = { currentFunc, signal };
+                            const dispatchInfo = { setResponse };
 
                             return handleFetch({ ...fetchInfo, ...dispatchInfo });
                         } else if (typeof currentFunc?.func === 'function') {
@@ -36,7 +36,6 @@ const useFetch = ({ checkConnnection = false } = {}) => {
                         }
                     });
                 }, Promise.resolve())
-                .then(() => setIsOnline(true))
                 .catch((err) => {
                     setResponse(false);
 

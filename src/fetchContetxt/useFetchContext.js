@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useMemo, useState } from 'react';
 
 const FetchContextState = createContext();
 const FetchContextDispatch = createContext();
@@ -14,11 +14,11 @@ export const useFetchContext = () => {
     return [state, dispatch];
 };
 
-export const FetchProvider = ({ options: { checkIsOnline = false } = {}, children }) => {
+export const FetchProvider = ({ children }) => {
     const [isOnline, setIsOnline] = useState(true);
 
     return (
-        <FetchContextState.Provider value={{ isOnline, checkIsOnline }}>
+        <FetchContextState.Provider value={{ isOnline }}>
             <FetchContextDispatch.Provider value={{ setIsOnline }}>
                 {children}
             </FetchContextDispatch.Provider>

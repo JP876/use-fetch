@@ -1,4 +1,4 @@
-const handleFetch = async ({ currentFunc, signal, setResponse, data }) => {
+const handleFetch = async ({ currentFunc, signal, setResponse }) => {
     let options = currentFunc?.options;
     let { url } = currentFunc;
 
@@ -24,7 +24,7 @@ const handleFetch = async ({ currentFunc, signal, setResponse, data }) => {
             } catch (err) {
                 //'Received text';
                 if (!res.ok) {
-                    return Promise.reject(data);
+                    return Promise.reject(text);
                 }
                 return Promise.resolve({ data: text, res });
             }
