@@ -17,15 +17,13 @@ const TestContainer = () => {
         doFetch: fetchTest,
         isLoading: testLoading,
         error: { msg: testMsg },
-    } = useFetch({
-        checkConnnection: true,
-    });
+    } = useFetch();
 
     const [state, { setIsOnline }] = useFetchContext();
 
     const fetchCheck = useCallback(() => {
-        fetchTest([{ url: `${baseUrl}/posts` }, { func: () => setIsOnline(true) }]);
-    }, [fetchTest, setIsOnline]);
+        doFetch([{ url: `${baseUrl}/posts` }, { func: () => setIsOnline(true) }]);
+    }, [doFetch, setIsOnline]);
 
     const handleTestFetch = useCallback(
         (type) => {
@@ -49,9 +47,10 @@ const TestContainer = () => {
                     },
                 },
                 { url: `${baseUrl}/users` },
+                { func: () => fetchCheck() },
             ]);
         },
-        [doFetch]
+        [doFetch, fetchCheck]
     );
 
     return (
@@ -59,6 +58,7 @@ const TestContainer = () => {
             <button disabled={isLoading} onClick={handleTestFetch}>
                 Test Correct
             </button>
+
             <button disabled={isLoading} onClick={() => handleTestFetch('error')}>
                 Test Wrong
             </button>
@@ -96,7 +96,7 @@ const TestContainer = () => {
 
 const Test = () => {
     return (
-        <FetchProvider options={{ checkIsOnline: true }}>
+        <FetchProvider>
             <TestContainer />
         </FetchProvider>
     );

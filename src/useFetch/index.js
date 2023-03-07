@@ -10,7 +10,6 @@ const useFetch = () => {
     const [error, setError] = useState({ error: false, msg: null });
 
     const [options, setOptions] = useState({});
-
     const [, { setIsOnline }] = useFetchContext();
 
     const handleReduce = useCallback(
@@ -19,11 +18,19 @@ const useFetch = () => {
                 .reduce((promiseChain, currentFunc, i) => {
                     return promiseChain.then((data) => {
                         if (currentFunc?.url) {
-                            const fetchInfo = { currentFunc, signal };
-                            const dispatchInfo = { setResponse };
-
-                            return handleFetch({ ...fetchInfo, ...dispatchInfo });
+                            return handleFetch({
+                                currentFunc,
+                                signal,
+                                setResponse,
+                                optionsArr,
+                                setIsLoading,
+                                i,
+                            });
                         } else if (typeof currentFunc?.func === 'function') {
+                            if (optionsArr.length - 1 === i) {
+                                setIsLoading(false);
+                            }
+
                             if (data && Object.keys(data).length !== 0) {
                                 currentFunc.func(data?.data, data?.res);
                             } else {
@@ -32,6 +39,9 @@ const useFetch = () => {
 
                             return Promise.resolve(data);
                         } else {
+                            if (optionsArr.length - 1 === i) {
+                                setIsLoading(false);
+                            }
                             return Promise.resolve(data);
                         }
                     });
@@ -44,15 +54,13 @@ const useFetch = () => {
                     }
 
                     setError({ error: true, msg: err });
-                })
-                .finally(() => setIsLoading(false));
+                    setIsLoading(false);
+                });
         },
         [setIsOnline]
     );
 
     const doFetch = useCallback((options) => {
-        //if (checkIsOnline && !isOnline && !checkConnnection) return;
-
         if (!isArrayEmpty(options)) {
             setOptions(options);
             setIsLoading(true);
