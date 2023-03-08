@@ -38,6 +38,11 @@ const handleFetch = async ({
                 if (!res.ok) {
                     return Promise.reject(text);
                 }
+
+                if (optionsArr.length - 1 === i) {
+                    setIsLoading(false);
+                }
+
                 return Promise.resolve({ data: text, res });
             }
         });
