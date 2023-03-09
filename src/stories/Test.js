@@ -46,6 +46,7 @@ const TestContainer = () => {
                         },
                     },
                 },
+                // { func: (data) => data.map((d) => d) },
                 { url: `${baseUrl}/users` },
                 { func: () => fetchCheck() },
             ]);

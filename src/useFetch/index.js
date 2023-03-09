@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFetchContext } from '../fetchContetxt/useFetchContext';
+import { APIError, NetworkError } from './errorInstances';
 import handleFetch from './handleFetch';
 
 const isArrayEmpty = (arr) => Array.isArray(arr) && arr.length === 0;
@@ -16,20 +17,22 @@ const useFetch = () => {
         (optionsArr, signal) => {
             return optionsArr
                 .reduce((promiseChain, currentFunc, i) => {
+                    const handleLoading = () => {
+                        if (optionsArr.length - 1 === i) {
+                            setIsLoading(false);
+                        }
+                    };
+
                     return promiseChain.then((data) => {
                         if (currentFunc?.url) {
                             return handleFetch({
                                 currentFunc,
                                 signal,
                                 setResponse,
-                                optionsArr,
-                                setIsLoading,
-                                i,
+                                handleLoading,
                             });
                         } else if (typeof currentFunc?.func === 'function') {
-                            if (optionsArr.length - 1 === i) {
-                                setIsLoading(false);
-                            }
+                            handleLoading();
 
                             if (data && Object.keys(data).length !== 0) {
                                 currentFunc.func(data?.data, data?.res);
@@ -39,9 +42,7 @@ const useFetch = () => {
 
                             return Promise.resolve(data);
                         } else {
-                            if (optionsArr.length - 1 === i) {
-                                setIsLoading(false);
-                            }
+                            handleLoading();
                             return Promise.resolve(data);
                         }
                     });
@@ -49,11 +50,15 @@ const useFetch = () => {
                 .catch((err) => {
                     setResponse(false);
 
-                    if (err instanceof TypeError) {
+                    if (err instanceof NetworkError) {
                         setIsOnline(false);
+                        setError({ error: true, ...err });
+                    } else if (err instanceof APIError) {
+                        setError({ error: true, ...err });
+                    } else {
+                        console.error(err);
                     }
 
-                    setError({ error: true, msg: err });
                     setIsLoading(false);
                 });
         },

@@ -1,11 +1,7 @@
-const handleFetch = async ({
-    currentFunc,
-    signal,
-    setResponse,
-    optionsArr,
-    setIsLoading,
-    i,
-}) => {
+import parseNetworkData from './parseNetworkData';
+import triggerNetworkRequest from './triggerNetworkRequest';
+
+const handleFetch = async ({ currentFunc, signal, setResponse, handleLoading }) => {
     let options = currentFunc?.options;
     let { url } = currentFunc;
 
@@ -13,39 +9,17 @@ const handleFetch = async ({
         options = {};
     }
 
-    return fetch(url, { ...options, signal })
-        .then((res) => Promise.all([res.text(), res]))
-        .then(([text, res]) => {
-            try {
-                let data = JSON.parse(text);
+    const response = await triggerNetworkRequest(url, options, signal);
+    const data = await parseNetworkData(response);
 
-                if (!res.ok) {
-                    return Promise.reject(data);
-                }
+    setResponse((prevState) => ({
+        ...prevState,
+        [currentFunc?.id || Object.keys(prevState).length]: data,
+    }));
 
-                setResponse((prevState) => ({
-                    ...prevState,
-                    [currentFunc?.id || Object.keys(prevState).length]: data,
-                }));
+    handleLoading();
 
-                if (optionsArr.length - 1 === i) {
-                    setIsLoading(false);
-                }
-
-                return Promise.resolve({ data, res });
-            } catch (err) {
-                //'Received text';
-                if (!res.ok) {
-                    return Promise.reject(text);
-                }
-
-                if (optionsArr.length - 1 === i) {
-                    setIsLoading(false);
-                }
-
-                return Promise.resolve({ data: text, res });
-            }
-        });
+    return Promise.resolve({ data, res: response });
 };
 
 export default handleFetch;
