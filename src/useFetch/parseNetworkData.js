@@ -5,14 +5,19 @@ const parseNetworkData = async (res) => {
 
     try {
         const data = JSON.parse(text);
+
         if (!res.ok) {
             throw new APIError(data, res);
         }
+
         return data;
     } catch (err) {
-        if (!res.ok) {
+        if (err instanceof APIError) {
+            throw new APIError(err?.msg, res);
+        } else if (!res.ok) {
             throw new APIError(text, res);
         }
+
         return text;
     }
 };
