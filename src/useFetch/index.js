@@ -55,7 +55,12 @@ const useFetch = () => {
                         setError({ error: true, ...err });
                     } else if (err instanceof APIError) {
                         setError({ error: true, ...err });
-                    } else {
+                    } else if (
+                        !(
+                            err instanceof DOMException &&
+                            (err?.name === 'AbortError' || err?.name === 'ABORT_ERR')
+                        )
+                    ) {
                         console.error(err);
                     }
 

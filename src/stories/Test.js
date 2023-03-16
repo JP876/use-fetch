@@ -13,17 +13,16 @@ const TestContainer = () => {
         response,
         error: { error, msg },
     } = useFetch();
-    const {
-        doFetch: fetchTest,
-        isLoading: testLoading,
-        error: { msg: testMsg },
-    } = useFetch();
 
     const [state, { setIsOnline }] = useFetchContext();
 
     const fetchCheck = useCallback(() => {
-        doFetch([{ url: `${baseUrl}/posts` }, { func: () => setIsOnline(true) }]);
+        doFetch([{ url: `${baseUrl}/posts/1` }, { func: () => setIsOnline(true) }]);
     }, [doFetch, setIsOnline]);
+
+    const handleTypeError = () => {
+        doFetch([{ url: `${baseUrl}/posts/1` }, { func: (data) => data.map((d) => d) }]);
+    };
 
     const handleTestFetch = useCallback(
         (type) => {
@@ -31,7 +30,6 @@ const TestContainer = () => {
 
             doFetch([
                 { url: `${baseUrl}/posts` },
-                //{ func: (data) => console.log(data) },
                 {
                     url: `${baseUrl}/${url}`,
                     options: {
@@ -46,27 +44,31 @@ const TestContainer = () => {
                         },
                     },
                 },
-                // { func: (data) => data.map((d) => d) },
-                { url: `${baseUrl}/users` },
-                //{ func: () => fetchCheck() },
+                { func: () => fetchCheck() },
             ]);
         },
-        [doFetch]
+        [doFetch, fetchCheck]
     );
 
     return (
         <>
-            <button disabled={isLoading} onClick={handleTestFetch}>
-                Test Correct
-            </button>
+            <div className="btn-container">
+                <button disabled={isLoading} onClick={handleTestFetch}>
+                    Test Correct
+                </button>
 
-            <button disabled={isLoading} onClick={() => handleTestFetch('error')}>
-                Test Wrong
-            </button>
+                <button disabled={isLoading} onClick={() => handleTestFetch('error')}>
+                    Test Wrong
+                </button>
 
-            <button disabled={testLoading} onClick={fetchCheck}>
-                Test Connection
-            </button>
+                <button disabled={isLoading} onClick={handleTypeError}>
+                    Test TypeError
+                </button>
+
+                <button disabled={isLoading} onClick={fetchCheck}>
+                    Test Connection
+                </button>
+            </div>
 
             <div className="status-container">
                 <ul>
@@ -74,18 +76,18 @@ const TestContainer = () => {
                     <li>Error: {error ? 'True' : 'False'}</li>
                     <li>Error message: {msg ? JSON.stringify(msg) : 'False'}</li>
                     <li>IsOnline: {state?.isOnline ? 'True' : 'False'}</li>
-                    <li>IsOnline message: {testMsg ? JSON.stringify(msg) : 'False'}</li>
-                    {response?.[1] && (
+
+                    {response?.[0] && (
                         <li>
-                            <h4>Response 1:</h4>
+                            <h4>Response 0:</h4>
                             <p style={{ marginTop: '.4rem' }}>
-                                Title: <span>{response[1]?.title}</span>
+                                Title: <span>{response[0]?.title}</span>
                             </p>
                             <p style={{ marginTop: '.4rem' }}>
-                                Body: <span>{response[1]?.body}</span>
+                                Body: <span>{response[0]?.body}</span>
                             </p>
                             <p style={{ marginTop: '.4rem' }}>
-                                UserId: <span>{response[1]?.userId}</span>
+                                UserId: <span>{response[0]?.userId}</span>
                             </p>
                         </li>
                     )}
