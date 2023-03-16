@@ -4,7 +4,9 @@ const triggerNetworkRequest = async (url, options, signal) => {
     try {
         return await fetch(url, { ...options, signal });
     } catch (err) {
-        throw new NetworkError(err?.message, url);
+        if (!(err instanceof DOMException && err?.name === 'AbortError')) {
+            throw new NetworkError(err?.message, url);
+        }
     }
 };
 
