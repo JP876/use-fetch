@@ -1,4 +1,5 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
+
 import { FetchProvider, useFetchContext } from '../fetchContetxt/useFetchContext';
 import useFetch from '../useFetch';
 
@@ -30,8 +31,13 @@ const TestContainer = () => {
             const url = type === 'error' ? 'posts1' : 'posts';
 
             doFetch([
+                {
+                    type: 'all',
+                    reqs: [{ url: `${baseUrl}/posts` }, { url: `${baseUrl}/users` }],
+                },
+                { func: (data) => console.log(data) },
                 { url: `${baseUrl}/posts` },
-                //{ func: (data) => console.log(data) },
+                /* { func: (data) => console.log(data) }, */
                 {
                     url: `${baseUrl}/${url}`,
                     options: {
@@ -46,13 +52,21 @@ const TestContainer = () => {
                         },
                     },
                 },
-                // { func: (data) => data.map((d) => d) },
+                {
+                    func: (data, res, controller) => {
+                        return null;
+                    },
+                },
                 { url: `${baseUrl}/users` },
-                //{ func: () => fetchCheck() },
+                /* { func: () => fetchCheck() } */
             ]);
         },
         [doFetch]
     );
+
+    /* useEffect(() => {
+        handleTestFetch();
+    }, [handleTestFetch]); */
 
     return (
         <>
