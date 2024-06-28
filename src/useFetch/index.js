@@ -48,23 +48,28 @@ const useFetch = () => {
                 console.error(err);
             }
 
-            // resetInfoRef();
+            resetInfoRef();
             setInfo({ ...initialInfo, error });
         },
-        [resetInfoRef]
+        [resetInfoRef, setIsOnline]
     );
 
     const handleFinish = useCallback(
-        (index) => {
+        (index, additionalData = {}) => {
             if (typeof index !== 'number') {
                 console.warn(`Index not found: ${index}`);
                 return;
             }
 
-            if (infoRef.current.options.length - 1 !== index) return;
+            if (infoRef.current.options.length - 1 !== index) {
+                return false;
+            }
 
-            setInfo({ ...initialInfo, response: infoRef.current.response });
-            // resetInfoRef();
+            const response = infoRef.current.response;
+            resetInfoRef();
+            setInfo({ ...initialInfo, response: response });
+
+            return Promise.resolve({ data: response, ...additionalData });
         },
         [resetInfoRef]
     );
@@ -73,20 +78,25 @@ const useFetch = () => {
         infoRef.current.response = { ...infoRef.current.response, [id]: res };
     }, []);
 
-    const handleStaticMethods = useCallback((currentFunc, signal, id, i) => {
-        return Promise[currentFunc.type](
-            currentFunc.reqs.map((el) =>
-                triggerNetworkRequest(el?.url, el?.options, signal)
-            )
-        ).then(async (results) => {
-            const data = await Promise.all(
-                results.map((el) => parseNetworkData(el?.value || el, currentFunc.type))
-            );
-            updateResponseRef(data, id);
-            handleFinish(i);
-            return Promise.resolve({ data, results });
-        });
-    }, []);
+    const handleStaticMethods = useCallback(
+        (currentFunc, signal, id, i) => {
+            return Promise[currentFunc.type](
+                currentFunc.reqs.map((el) =>
+                    triggerNetworkRequest(el?.url, el?.options, signal)
+                )
+            ).then(async (results) => {
+                const data = await Promise.all(
+                    results.map((el) =>
+                        parseNetworkData(el?.value || el, currentFunc.type)
+                    )
+                );
+
+                updateResponseRef(data, id);
+                return Promise.resolve({ data, res: results });
+            });
+        },
+        [updateResponseRef]
+    );
 
     const handleReduce = useCallback(() => {
         if (isArrayEmpty(infoRef.current.options)) {
@@ -102,6 +112,9 @@ const useFetch = () => {
                 const id = currentFunc?.id || i;
 
                 return promiseChain.then((data) => {
+                    const finish = handleFinish(i);
+                    if (finish) return finish;
+
                     if (
                         Array.isArray(currentFunc?.reqs) &&
                         currentFunc?.reqs.filter((el) => !el?.url).length === 0
@@ -119,11 +132,8 @@ const useFetch = () => {
                             currentFunc,
                             signal,
                             updateResponseRef: (data) => updateResponseRef(data, id),
-                            handleFinish: () => handleFinish(i),
                         });
                     } else if (typeof currentFunc?.func === 'function') {
-                        handleFinish(i);
-
                         if (data && Object.keys(data).length !== 0) {
                             currentFunc.func(data?.data, data?.res, controller);
                         } else {
@@ -131,37 +141,31 @@ const useFetch = () => {
                         }
 
                         return Promise.resolve(data);
-                    } else {
-                        handleFinish(i);
-                        return Promise.resolve(data);
                     }
+
+                    return Promise.resolve(data);
                 });
             }, Promise.resolve())
             .catch(handleCatch);
-    }, [setIsOnline, handleFinish, handleCatch, updateResponseRef, handleStaticMethods]);
+    }, [handleFinish, handleCatch, updateResponseRef, handleStaticMethods]);
 
     const doFetch = useCallback(
         (options) => {
             if (!isArrayEmpty(options)) {
-                resetInfoRef();
-                infoRef.current.options = options;
+                const controller = new AbortController();
+                infoRef.current = { options, response: {}, controller };
                 setInfo({ ...initialInfo, isLoading: true });
+                return handleReduce();
             }
         },
-        [handleReduce, resetInfoRef]
+        [handleReduce]
     );
 
     useEffect(() => {
         if (!info?.isLoading) return;
-
-        const controller = new AbortController();
-        infoRef.current.controller = controller;
-
-        handleReduce();
-
         return () => {
-            if (typeof controller?.abort === 'function') {
-                controller.abort();
+            if (typeof infoRef.current.controller?.abort === 'function') {
+                infoRef.current.controller.abort();
             }
         };
     }, [info?.isLoading, handleReduce]);

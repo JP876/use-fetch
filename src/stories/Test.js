@@ -35,7 +35,11 @@ const TestContainer = () => {
                     type: 'all',
                     reqs: [{ url: `${baseUrl}/posts` }, { url: `${baseUrl}/users` }],
                 },
-                { func: (data) => console.log(data) },
+                {
+                    func: (data, res, controller) => {
+                        // console.log(data, controller);
+                    },
+                },
                 { url: `${baseUrl}/posts` },
                 /* { func: (data) => console.log(data) }, */
                 {
@@ -58,8 +62,10 @@ const TestContainer = () => {
                     },
                 },
                 { url: `${baseUrl}/users` },
-                /* { func: () => fetchCheck() } */
-            ]);
+                /* { func: () => fetchCheck() }, */
+            ]).then((data) => {
+                console.log(data);
+            });
         },
         [doFetch]
     );
