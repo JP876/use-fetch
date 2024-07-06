@@ -25,6 +25,10 @@ button:hover {
     background-color: lightgray;
 }
 
+label:hover {
+    cursor: pointer;
+}
+
 ul li {
     font-size: 1.4rem;
     margin-top: 0.8rem;

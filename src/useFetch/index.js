@@ -5,35 +5,33 @@ import { APIError, NetworkError } from './errorInstances';
 import handleFetch from './handleFetch';
 import triggerNetworkRequest from './triggerNetworkRequest';
 import parseNetworkData from './parseNetworkData';
+import consts from './consts';
 
-const isArrayEmpty = (arr) => Array.isArray(arr) && arr.length === 0;
-const typeOptions = ['all', 'allSettled'];
-const initialInfo = {
-    response: {},
-    isLoading: false,
-    error: { error: false, msg: null },
-};
-const initialRefInfo = {
-    response: {},
-    options: null,
-    controller: null,
-};
+const useFetch = (fetchOptions = consts.defaultFetchOptions) => {
+    const [info, setInfo] = useState(consts.initialInfo);
 
-const useFetch = () => {
+    const infoRef = useRef(consts.initialRefInfo);
+    const justUnMounted = useRef(false);
+
     const [, { setIsOnline }] = useFetchContext();
 
-    const [info, setInfo] = useState(initialInfo);
-    const infoRef = useRef(initialRefInfo);
+    const handleResetError = useCallback(() => {
+        setInfo((prevInfo) => ({ ...prevInfo, error: consts.initialInfo.error }));
+    }, []);
 
     const resetInfoRef = useCallback(() => {
-        infoRef.current = { response: {}, options: null, controller: null };
+        infoRef.current = { response: {}, options: null, controller: null, numOfCalls: 0 };
+    }, []);
+
+    const updateResponseRef = useCallback((id, res) => {
+        infoRef.current.response = { ...infoRef.current.response, [id]: res };
     }, []);
 
     const handleCatch = useCallback(
         (err) => {
             if (!err) {
                 console.warn(`Error object not found: ${err}`);
-                setInfo(initialInfo);
+                setInfo(consts.initialInfo);
                 return;
             }
 
@@ -44,98 +42,85 @@ const useFetch = () => {
                 error = { error: true, msg: null, ...err };
             } else if (err instanceof APIError) {
                 error = { error: true, msg: null, ...err };
-            } else {
+            } else if (err.message !== 'AbortError') {
                 console.error(err);
             }
 
-            resetInfoRef();
-            setInfo({ ...initialInfo, error });
+            if (err.message !== 'AbortError' && !justUnMounted.current) {
+                resetInfoRef();
+                setInfo({ ...consts.initialInfo, error });
+            }
         },
         [resetInfoRef, setIsOnline]
     );
 
-    const handleFinish = useCallback(
-        (index, additionalData = {}) => {
-            if (typeof index !== 'number') {
-                console.warn(`Index not found: ${index}`);
-                return;
-            }
-
-            if (infoRef.current.options.length - 1 !== index) {
-                return false;
-            }
-
-            const response = infoRef.current.response;
-            resetInfoRef();
-            setInfo({ ...initialInfo, response: response });
-
-            return Promise.resolve({ data: response, ...additionalData });
-        },
-        [resetInfoRef]
-    );
-
-    const updateResponseRef = useCallback((res, id) => {
-        infoRef.current.response = { ...infoRef.current.response, [id]: res };
-    }, []);
-
     const handleStaticMethods = useCallback(
-        (currentFunc, signal, id, i) => {
+        (currentFunc, signal, id) => {
             return Promise[currentFunc.type](
-                currentFunc.reqs.map((el) =>
-                    triggerNetworkRequest(el?.url, el?.options, signal)
-                )
+                currentFunc.reqs.map((el) => triggerNetworkRequest(el?.url, el?.options, signal))
             ).then(async (results) => {
                 const data = await Promise.all(
-                    results.map((el) =>
-                        parseNetworkData(el?.value || el, currentFunc.type)
-                    )
+                    results.map((el) => parseNetworkData(el?.value || el, currentFunc.type))
                 );
 
-                updateResponseRef(data, id);
+                updateResponseRef(id, data);
                 return Promise.resolve({ data, res: results });
             });
         },
         [updateResponseRef]
     );
 
-    const handleReduce = useCallback(() => {
-        if (isArrayEmpty(infoRef.current.options)) {
-            console.warn(`Passed options are: ${infoRef.current.options}`);
-            return;
-        }
+    const handleReduce = useCallback(
+        (options, value) => {
+            let fetchOptions = options;
+            if (!Array.isArray(options)) fetchOptions = infoRef.current.options;
 
-        const controller = infoRef.current.controller;
-        const signal = controller?.signal;
+            if (!consts.isArrayValid(fetchOptions)) {
+                console.warn(`Passed options are: ${fetchOptions}`);
+                return;
+            }
 
-        return infoRef.current.options
-            .reduce((promiseChain, currentFunc, i) => {
-                const id = currentFunc?.id || i;
+            infoRef.current.numOfCalls = ++infoRef.current.numOfCalls;
+
+            const controller = infoRef.current.controller;
+            const signal = controller?.signal;
+
+            return fetchOptions.reduce((promiseChain, currentFunc, i) => {
+                let index = i;
+                if (value) index = value + i;
+
+                const id = currentFunc?.id || index;
 
                 return promiseChain.then((data) => {
-                    const finish = handleFinish(i);
-                    if (finish) return finish;
-
                     if (
                         Array.isArray(currentFunc?.reqs) &&
                         currentFunc?.reqs.filter((el) => !el?.url).length === 0
                     ) {
-                        if (!typeOptions.includes(currentFunc?.type)) {
-                            const types = typeOptions.join(', ');
-                            console.warn(
-                                `Supported promise static methods are: ${types}`
-                            );
-                            return Promise.resolve(data);
+                        let type = 'allSettled';
+                        if (consts.typeOptions.includes(currentFunc?.type)) {
+                            type = currentFunc.type;
                         }
-                        return handleStaticMethods(currentFunc, signal, id, i);
+
+                        return handleStaticMethods({ ...currentFunc, type }, signal, id);
                     } else if (currentFunc?.url) {
                         return handleFetch({
-                            currentFunc,
                             signal,
-                            updateResponseRef: (data) => updateResponseRef(data, id),
+                            currentFunc,
+                            updateResponseRef: (data) => updateResponseRef(id, data),
                         });
                     } else if (typeof currentFunc?.func === 'function') {
                         if (data && Object.keys(data).length !== 0) {
-                            currentFunc.func(data?.data, data?.res, controller);
+                            const result = currentFunc.func(data?.data, data?.res, controller);
+
+                            if (consts.isArrayValid(result)) {
+                                return handleReduce(result, `${infoRef.current.numOfCalls}_`);
+                            }
+
+                            if (typeof result?.then === 'function') {
+                                return result.then((value) => {
+                                    return Promise.resolve({ ...data, value });
+                                });
+                            }
                         } else {
                             currentFunc.func();
                         }
@@ -145,32 +130,53 @@ const useFetch = () => {
 
                     return Promise.resolve(data);
                 });
-            }, Promise.resolve())
-            .catch(handleCatch);
-    }, [handleFinish, handleCatch, updateResponseRef, handleStaticMethods]);
+            }, Promise.resolve());
+        },
+        [updateResponseRef, handleStaticMethods]
+    );
 
     const doFetch = useCallback(
         (options) => {
-            if (!isArrayEmpty(options)) {
+            if (consts.isArrayValid(options)) {
                 const controller = new AbortController();
-                infoRef.current = { options, response: {}, controller };
-                setInfo({ ...initialInfo, isLoading: true });
-                return handleReduce();
+                infoRef.current = { options, response: {}, controller, numOfCalls: 0 };
+
+                setInfo({ ...consts.initialInfo, isLoading: true });
+
+                return handleReduce()
+                    .then(() => {
+                        const response = { ...infoRef.current.response };
+
+                        if (!justUnMounted.current) {
+                            setInfo({ ...consts.initialInfo, response });
+                            resetInfoRef();
+                        }
+
+                        return Promise.resolve({ data: response });
+                    })
+                    .catch(handleCatch);
             }
         },
-        [handleReduce]
+        [handleCatch, handleReduce, resetInfoRef]
     );
 
     useEffect(() => {
-        if (!info?.isLoading) return;
         return () => {
             if (typeof infoRef.current.controller?.abort === 'function') {
-                infoRef.current.controller.abort();
+                if (fetchOptions?.abortOnUnmount) infoRef.current.controller.abort();
+                justUnMounted.current = true;
             }
         };
-    }, [info?.isLoading, handleReduce]);
+    }, [fetchOptions?.abortOnUnmount]);
 
-    return useMemo(() => ({ ...info, doFetch }), [info, doFetch]);
+    return useMemo(() => {
+        return {
+            ...info,
+            controller: infoRef.current.controller,
+            doFetch,
+            handleResetError,
+        };
+    }, [info, doFetch, handleResetError]);
 };
 
 export default useFetch;
