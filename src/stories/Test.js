@@ -95,7 +95,6 @@ const FetchContainer = ({ initialFetch }) => {
             });
         },
         [doFetch, fetchCheck]
-        [doFetch, fetchCheck]
     );
 
     useEffect(() => {
@@ -112,15 +111,11 @@ const FetchContainer = ({ initialFetch }) => {
                     Test Correct
                 </button>
 
-            <button disabled={isLoading} onClick={() => handleTestFetch('error')}>
-                Test Wrong
-            </button>
-            <button disabled={isLoading || !error} onClick={handleResetError}>
-                Reset error
-            </button>
-
-                <button disabled={isLoading} onClick={handleTypeError}>
-                    Test TypeError
+                <button disabled={isLoading} onClick={() => handleTestFetch('error')}>
+                    Test Wrong
+                </button>
+                <button disabled={isLoading || !error} onClick={handleResetError}>
+                    Reset error
                 </button>
 
                 <button disabled={isLoading} onClick={fetchCheck}>
