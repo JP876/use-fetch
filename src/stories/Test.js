@@ -95,6 +95,7 @@ const FetchContainer = ({ initialFetch }) => {
             });
         },
         [doFetch, fetchCheck]
+        [doFetch, fetchCheck]
     );
 
     useEffect(() => {
@@ -106,9 +107,10 @@ const FetchContainer = ({ initialFetch }) => {
 
     return (
         <>
-            <button disabled={isLoading} onClick={handleTestFetch}>
-                Test Correct
-            </button>
+            <div className="btn-container">
+                <button disabled={isLoading} onClick={handleTestFetch}>
+                    Test Correct
+                </button>
 
             <button disabled={isLoading} onClick={() => handleTestFetch('error')}>
                 Test Wrong
@@ -117,9 +119,14 @@ const FetchContainer = ({ initialFetch }) => {
                 Reset error
             </button>
 
-            <button disabled={testLoading} onClick={fetchCheck}>
-                Test Connection
-            </button>
+                <button disabled={isLoading} onClick={handleTypeError}>
+                    Test TypeError
+                </button>
+
+                <button disabled={isLoading} onClick={fetchCheck}>
+                    Test Connection
+                </button>
+            </div>
 
             <div className="status-container">
                 <ul>
@@ -129,15 +136,15 @@ const FetchContainer = ({ initialFetch }) => {
                     <li>IsOnline message: {testMsg ? JSON.stringify(msg) : 'False'}</li>
                     {response?.[1] && (
                         <li>
-                            <h4>Response 1:</h4>
+                            <h4>Response 0:</h4>
                             <p style={{ marginTop: '.4rem' }}>
-                                Title: <span>{response[1]?.title}</span>
+                                Title: <span>{response[0]?.title}</span>
                             </p>
                             <p style={{ marginTop: '.4rem' }}>
-                                Body: <span>{response[1]?.body}</span>
+                                Body: <span>{response[0]?.body}</span>
                             </p>
                             <p style={{ marginTop: '.4rem' }}>
-                                UserId: <span>{response[1]?.userId}</span>
+                                UserId: <span>{response[0]?.userId}</span>
                             </p>
                         </li>
                     )}
