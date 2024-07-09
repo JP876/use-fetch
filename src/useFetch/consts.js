@@ -9,7 +9,7 @@ const checkFetchSchema = (arr) => {
 
 const typeOptions = ['all', 'allSettled'];
 // TODO: mode: fetch | XMLHttpRequest
-const defaultFetchOptions = { abortOnUnmount: true };
+const defaultFetchOptions = { abortOnUnmount: true, catchHandlerPassed: false };
 
 const initialInfo = {
     response: {},

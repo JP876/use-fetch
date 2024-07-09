@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { FetchProvider, useFetchContext } from '../fetchContetxt/useFetchContext';
 import useFetch from '../useFetch';
+import triggerNetworkRequest from '../useFetch/triggerNetworkRequest';
+import { APIError } from '../useFetch/errorInstances';
 
 const baseUrl = 'https://jsonplaceholder.typicode.com';
 const textBody =
@@ -16,7 +18,8 @@ const FetchContainer = ({ initialFetch }) => {
         response,
         error: { error, msg },
         handleResetError,
-    } = useFetch({ abortOnUnmount: true });
+        controller,
+    } = useFetch({ abortOnUnmount: true, catchHandlerPassed: true });
     const {
         doFetch: fetchTest,
         isLoading: testLoading,
@@ -75,7 +78,18 @@ const FetchContainer = ({ initialFetch }) => {
                 },
                 {
                     func: (data, res, controller) => {
-                        return null;
+                        return new Promise((resolve) => resolve()).then(async () => {
+                            const reqRes = await triggerNetworkRequest(
+                                `${baseUrl}/posts`,
+                                {},
+                                controller?.signal
+                            );
+
+                            if (!reqRes?.ok) throw new APIError('Message');
+
+                            const data = await reqRes.json();
+                            return Promise.resolve({ data, res: reqRes });
+                        });
                     },
                 },
                 /* { url: `${baseUrl}/users` },
@@ -90,9 +104,15 @@ const FetchContainer = ({ initialFetch }) => {
                             return resolve('yooo');
                         }),
                 }, */
-            ]).then((res) => {
-                // console.log(res?.data);
-            });
+            ])
+                .then((a) => {
+                    console.log(a);
+                })
+                .catch((e) => {
+                    if (e?.err instanceof APIError) {
+                        console.log(e);
+                    }
+                });
         },
         [doFetch, fetchCheck]
     );
@@ -103,6 +123,12 @@ const FetchContainer = ({ initialFetch }) => {
         }
         justMounted.current = false;
     }, [handleTestFetch, initialFetch]);
+
+    /* useEffect(() => {
+        if (controller) {
+            setTimeout(() => controller?.abort(), 100);
+        }
+    }, [controller]); */
 
     return (
         <>
@@ -154,6 +180,19 @@ const TestContainer = () => {
     const [initialFetch, setInitialFetch] = useState(false);
 
     const [state] = useFetchContext();
+
+    useEffect(() => {
+        const handleError = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            return false;
+        };
+        window.addEventListener('unhandledrejection', handleError);
+        return () => {
+            window.addEventListener('unhandledrejection', handleError);
+        };
+    }, []);
 
     return (
         <>

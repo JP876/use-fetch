@@ -1,4 +1,4 @@
-import { NetworkError } from './errorInstances';
+import { AbortError, NetworkError } from './errorInstances';
 
 const triggerNetworkRequest = async (url, options, signal) => {
     try {
@@ -8,7 +8,7 @@ const triggerNetworkRequest = async (url, options, signal) => {
             err instanceof DOMException &&
             (err?.name === 'AbortError' || err?.name === 'ABORT_ERR')
         ) {
-            throw new Error('AbortError');
+            throw new AbortError(err?.message, url);
         } else {
             throw new NetworkError(err?.message, url);
         }

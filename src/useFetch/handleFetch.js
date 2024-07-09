@@ -7,7 +7,7 @@ const handleFetch = async (info) => {
         return;
     }
 
-    const { currentFunc, signal, updateResponseRef } = info;
+    const { currentFunc, signal, updateResponse } = info;
     let options = currentFunc?.options;
     let { url } = currentFunc;
 
@@ -18,7 +18,7 @@ const handleFetch = async (info) => {
     const response = await triggerNetworkRequest(url, options, signal);
     const data = await parseNetworkData(response);
 
-    if (typeof updateResponseRef === 'function') updateResponseRef(data);
+    if (typeof updateResponse === 'function') updateResponse(data);
 
     return Promise.resolve({ data, res: response });
 };

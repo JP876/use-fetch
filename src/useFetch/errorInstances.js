@@ -26,4 +26,18 @@ class NetworkError extends Error {
     }
 }
 
-export { APIError, NetworkError };
+class AbortError extends Error {
+    constructor(msg, url, ...params) {
+        super(...params);
+
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, AbortError);
+        }
+
+        this.name = 'AbortError';
+        this.message = msg;
+        this.requestUrl = url;
+    }
+}
+
+export { APIError, NetworkError, AbortError };
