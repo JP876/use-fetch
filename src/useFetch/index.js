@@ -18,7 +18,7 @@ const useFetch = (fetchOptions = consts.defaultFetchOptions) => {
     }, []);
 
     const resetInfoRef = useCallback(() => {
-        infoRef.current = { response: {}, options: null, controller: null, numOfCalls: 0 };
+        infoRef.current = { response: {}, controller: null, numOfCalls: 0 };
     }, []);
 
     const updateResponseRef = useCallback((id, res) => {
@@ -64,7 +64,7 @@ const useFetch = (fetchOptions = consts.defaultFetchOptions) => {
 
                 setInfo({ ...consts.initialInfo, isLoading: true });
 
-                return handleReduce()
+                return handleReduce(options)
                     .then(() => {
                         const response = { ...infoRef.current.response };
 

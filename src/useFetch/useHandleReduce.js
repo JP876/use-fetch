@@ -9,7 +9,9 @@ const useHandleReduce = (infoRef, updateResponseRef) => {
     const handleStaticMethods = useCallback(
         (currentFunc, signal, id) => {
             return Promise[currentFunc.type](
-                currentFunc.reqs.map((el) => triggerNetworkRequest(el?.url, el?.options, signal))
+                currentFunc.reqs.map((el) =>
+                    triggerNetworkRequest(el?.url, { ...(el?.options || {}), signal })
+                )
             ).then(async (results) => {
                 const data = await Promise.all(
                     results.map((el) => parseNetworkData(el?.value || el, currentFunc.type))
@@ -24,11 +26,8 @@ const useHandleReduce = (infoRef, updateResponseRef) => {
 
     const handleReduce = useCallback(
         (options, value) => {
-            let fetchOptions = options;
-            if (!Array.isArray(options)) fetchOptions = infoRef.current.options;
-
-            if (!consts.isArrayValid(fetchOptions)) {
-                console.warn(`Passed options are: ${fetchOptions}`);
+            if (!consts.isArrayValid(options)) {
+                console.warn(`Passed options are: ${options}`);
                 return;
             }
 
@@ -37,7 +36,7 @@ const useHandleReduce = (infoRef, updateResponseRef) => {
             const controller = infoRef.current.controller;
             const signal = controller?.signal;
 
-            return fetchOptions.reduce((promiseChain, currentFunc, i) => {
+            return options.reduce((promiseChain, currentFunc, i) => {
                 let index = i;
                 if (value) index = value + i;
 
@@ -69,11 +68,15 @@ const useHandleReduce = (infoRef, updateResponseRef) => {
 
                             if (typeof result?.then === 'function') {
                                 return result.then((value) => {
-                                    return Promise.resolve({ ...data, value });
+                                    updateResponseRef(id, value);
+                                    return Promise.resolve({ data: value });
                                 });
                             }
                         } else {
-                            currentFunc.func();
+                            const result = currentFunc.func();
+                            if (consts.isArrayValid(result)) {
+                                return handleReduce(result, `${infoRef.current.numOfCalls}_`);
+                            }
                         }
 
                         return Promise.resolve(data);

@@ -8,14 +8,10 @@ const handleFetch = async (info) => {
     }
 
     const { currentFunc, signal, updateResponse } = info;
-    let options = currentFunc?.options;
+    let options = currentFunc?.options || {};
     let { url } = currentFunc;
 
-    if (!currentFunc.options) {
-        options = {};
-    }
-
-    const response = await triggerNetworkRequest(url, options, signal);
+    const response = await triggerNetworkRequest(url, { ...options, signal });
     const data = await parseNetworkData(response);
 
     if (typeof updateResponse === 'function') updateResponse(data);

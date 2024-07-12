@@ -1,8 +1,8 @@
 import { AbortError, NetworkError } from './errorInstances';
 
-const triggerNetworkRequest = async (url, options, signal) => {
+const triggerNetworkRequest = async (url, options = {}) => {
     try {
-        return await fetch(url, { ...options, signal });
+        return await fetch(url, options);
     } catch (err) {
         if (
             err instanceof DOMException &&

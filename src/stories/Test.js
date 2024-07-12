@@ -5,6 +5,10 @@ import useFetch from '../useFetch';
 import triggerNetworkRequest from '../useFetch/triggerNetworkRequest';
 import { APIError } from '../useFetch/errorInstances';
 
+const getRandomNum = (min, max) => {
+    return Math.round(Math.random() * (max - min) + min);
+};
+
 const baseUrl = 'https://jsonplaceholder.typicode.com';
 const textBody =
     'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer euismod massa sit amet ante fermentum, sed viverra justo mollis. Nunc faucibus ac elit vel interdum.';
@@ -20,6 +24,7 @@ const FetchContainer = ({ initialFetch }) => {
         handleResetError,
         controller,
     } = useFetch({ abortOnUnmount: true, catchHandlerPassed: true });
+
     const {
         doFetch: fetchTest,
         isLoading: testLoading,
@@ -37,29 +42,29 @@ const FetchContainer = ({ initialFetch }) => {
             const url = type === 'error' ? 'posts1' : 'posts';
 
             doFetch([
-                /* {
-                    type: 'all',
+                {
+                    // type options: 'all' || 'allSettled'
+                    // default type: 'allSettled'
+                    // type: "all",
                     reqs: [{ url: `${baseUrl}/posts` }, { url: `${baseUrl}/users` }],
                 },
                 {
                     func: (data, res, controller) => {
-                        // console.log(data, controller);
+                        const [posts, users] = data;
+                        const randomUser = users[getRandomNum(0, users?.length)];
+
+                        return [{ url: `${baseUrl}/users/${randomUser?.id || 1}` }];
                     },
-                }, */
-                { url: `${baseUrl}/posts` },
+                },
                 {
-                    func: (data) => {
-                        return [
-                            {
-                                // type: 'all',
-                                reqs: [{ url: `${baseUrl}/posts` }, { url: `${baseUrl}/users` }],
-                            },
-                            {
-                                func: (data) => {
-                                    // console.log(data);
-                                },
-                            },
-                        ];
+                    func: (data, res, controller) => {
+                        return new Promise((res) => res()).then(async () => {
+                            const reqRes = await fetch(`${baseUrl}/todos`, {
+                                signal: controller?.signal,
+                            });
+                            const data = await reqRes.json();
+                            return Promise.resolve({ data });
+                        });
                     },
                 },
                 {
@@ -76,22 +81,19 @@ const FetchContainer = ({ initialFetch }) => {
                         },
                     },
                 },
-                {
+                /* {
                     func: (data, res, controller) => {
                         return new Promise((resolve) => resolve()).then(async () => {
-                            const reqRes = await triggerNetworkRequest(
-                                `${baseUrl}/posts`,
-                                {},
-                                controller?.signal
-                            );
+                            const reqRes = await triggerNetworkRequest(`${baseUrl}/users`, {
+                                signal: controller?.signal,
+                            });
 
-                            if (!reqRes?.ok) throw new APIError('Message');
+                            if (!reqRes?.ok) throw new APIError('Message', reqRes);
 
-                            const data = await reqRes.json();
-                            return Promise.resolve({ data, res: reqRes });
+                            // const data = await reqRes.json();
                         });
                     },
-                },
+                }, */
                 /* { url: `${baseUrl}/users` },
                 {
                     func: (data, res, controller) => {
@@ -109,12 +111,13 @@ const FetchContainer = ({ initialFetch }) => {
                     console.log(a);
                 })
                 .catch((e) => {
-                    if (e?.err instanceof APIError) {
+                    console.log(e);
+                    /* if (e?.err instanceof APIError) {
                         console.log(e);
-                    }
+                    } */
                 });
         },
-        [doFetch, fetchCheck]
+        [doFetch]
     );
 
     useEffect(() => {
@@ -125,8 +128,8 @@ const FetchContainer = ({ initialFetch }) => {
     }, [handleTestFetch, initialFetch]);
 
     /* useEffect(() => {
-        if (controller) {
-            setTimeout(() => controller?.abort(), 100);
+        if (controller instanceof AbortController) {
+            setTimeout(() => controller?.abort(), 200);
         }
     }, [controller]); */
 

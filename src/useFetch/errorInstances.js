@@ -21,8 +21,8 @@ class NetworkError extends Error {
         }
 
         this.name = 'NetworkError';
-        this.message = msg;
-        this.requestUrl = url;
+        this.msg = msg;
+        this.response = url;
     }
 }
 
@@ -35,8 +35,8 @@ class AbortError extends Error {
         }
 
         this.name = 'AbortError';
-        this.message = msg;
-        this.requestUrl = url;
+        this.msg = msg;
+        this.response = url;
     }
 }
 

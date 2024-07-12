@@ -19,7 +19,6 @@ const initialInfo = {
 
 const initialRefInfo = {
     response: {},
-    options: null,
     controller: null,
     numOfCalls: 0,
 };
