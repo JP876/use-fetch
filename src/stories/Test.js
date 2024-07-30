@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { FetchProvider, useFetchContext } from '../fetchContetxt/useFetchContext';
+import {
+    FetchProvider,
+    useFetchDispatch,
+    useFetchStatusState,
+} from '../fetchContetxt/useFetchContext';
 import useFetch from '../useFetch';
 import triggerNetworkRequest from '../useFetch/triggerNetworkRequest';
 import { APIError } from '../useFetch/errorInstances';
@@ -16,14 +20,11 @@ const textBody =
 const FetchContainer = ({ initialFetch }) => {
     const justMounted = useRef(true);
 
-    const {
-        doFetch,
-        isLoading,
-        response,
-        error: { error, msg },
-        handleResetError,
-        controller,
-    } = useFetch({ abortOnUnmount: true, catchHandlerPassed: true });
+    const { doFetch, isLoading, response, error, handleResetError, controller } = useFetch({
+        abortOnUnmount: false,
+        hasAdditionalCatchMethod: true,
+    });
+    const { error: isError, msg } = error;
 
     const {
         doFetch: fetchTest,
@@ -31,7 +32,7 @@ const FetchContainer = ({ initialFetch }) => {
         error: { msg: testMsg },
     } = useFetch();
 
-    const [, { setIsOnline }] = useFetchContext();
+    const { setIsOnline } = useFetchDispatch();
 
     const fetchCheck = useCallback(() => {
         fetchTest([{ url: `${baseUrl}/posts` }, { func: () => setIsOnline(true) }]);
@@ -45,7 +46,7 @@ const FetchContainer = ({ initialFetch }) => {
                 {
                     // type options: 'all' || 'allSettled'
                     // default type: 'allSettled'
-                    // type: "all",
+                    // type: 'all',
                     reqs: [{ url: `${baseUrl}/posts` }, { url: `${baseUrl}/users` }],
                 },
                 {
@@ -63,11 +64,12 @@ const FetchContainer = ({ initialFetch }) => {
                                 signal: controller?.signal,
                             });
                             const data = await reqRes.json();
-                            return Promise.resolve({ data });
+                            return Promise.resolve(data);
                         });
                     },
                 },
                 {
+                    id: 'addedPost',
                     url: `${baseUrl}/${url}`,
                     options: {
                         method: 'POST',
@@ -81,19 +83,22 @@ const FetchContainer = ({ initialFetch }) => {
                         },
                     },
                 },
-                /* {
+                {
                     func: (data, res, controller) => {
-                        return new Promise((resolve) => resolve()).then(async () => {
-                            const reqRes = await triggerNetworkRequest(`${baseUrl}/users`, {
-                                signal: controller?.signal,
-                            });
+                        return new Promise((resolve) => setTimeout(resolve, 2000)).then(
+                            async () => {
+                                const reqRes = await triggerNetworkRequest(`${baseUrl}/users`, {
+                                    signal: controller?.signal,
+                                });
 
-                            if (!reqRes?.ok) throw new APIError('Message', reqRes);
+                                if (!reqRes?.ok) throw new APIError('Message', reqRes);
 
-                            // const data = await reqRes.json();
-                        });
+                                const data = await reqRes.json();
+                                return Promise.resolve(data);
+                            }
+                        );
                     },
-                }, */
+                },
                 /* { url: `${baseUrl}/users` },
                 {
                     func: (data, res, controller) => {
@@ -155,20 +160,20 @@ const FetchContainer = ({ initialFetch }) => {
             <div className="status-container">
                 <ul>
                     <li>Loading: {isLoading ? 'True' : 'False'}</li>
-                    <li>Error: {error ? 'True' : 'False'}</li>
+                    <li>Error: {isError ? 'True' : 'False'}</li>
                     <li>Error message: {msg ? JSON.stringify(msg) : 'False'}</li>
                     <li>IsOnline message: {testMsg ? JSON.stringify(msg) : 'False'}</li>
-                    {response?.[1] && (
+                    {response?.addedPost && (
                         <li>
                             <h4>Response 0:</h4>
                             <p style={{ marginTop: '.4rem' }}>
-                                Title: <span>{response[0]?.title}</span>
+                                Title: <span>{response?.addedPost?.title}</span>
                             </p>
                             <p style={{ marginTop: '.4rem' }}>
-                                Body: <span>{response[0]?.body}</span>
+                                Body: <span>{response?.addedPost?.body}</span>
                             </p>
                             <p style={{ marginTop: '.4rem' }}>
-                                UserId: <span>{response[0]?.userId}</span>
+                                UserId: <span>{response?.addedPost?.userId}</span>
                             </p>
                         </li>
                     )}
@@ -182,7 +187,7 @@ const TestContainer = () => {
     const [mount, setMount] = useState(true);
     const [initialFetch, setInitialFetch] = useState(false);
 
-    const [state] = useFetchContext();
+    const { isOnline } = useFetchStatusState();
 
     useEffect(() => {
         const handleError = (event) => {
@@ -234,7 +239,7 @@ const TestContainer = () => {
                         </label>
                     </div>
                     <p style={{ fontSize: '1.4rem', marginLeft: '1rem' }}>
-                        IsOnline: {state?.isOnline ? 'True' : 'False'}
+                        IsOnline: {isOnline ? 'True' : 'False'}
                     </p>
                 </div>
             </div>
@@ -244,8 +249,16 @@ const TestContainer = () => {
     );
 };
 
+const confirmIsOnline = (err) => {
+    return new Promise((resolve, reject) => {
+        return fetch(`${baseUrl}/todos`)
+            .then(() => resolve())
+            .catch(() => reject());
+    });
+};
+
 const Test = () => (
-    <FetchProvider>
+    <FetchProvider confirmIsOnline={confirmIsOnline}>
         <TestContainer />
     </FetchProvider>
 );

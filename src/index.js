@@ -1,4 +1,8 @@
-import { FetchProvider, useFetchContext } from './fetchContetxt/useFetchContext';
+import {
+    FetchProvider,
+    useFetchStatusState,
+    useFetchDispatch,
+} from './fetchContetxt/useFetchContext';
 import useFetch from './useFetch';
 import consts from './useFetch/consts';
 import triggerNetworkRequest from './useFetch/triggerNetworkRequest';
@@ -9,7 +13,8 @@ const defaultFetchOptions = consts.defaultFetchOptions;
 export {
     useFetch as default,
     FetchProvider,
-    useFetchContext,
+    useFetchStatusState,
+    useFetchDispatch,
     defaultFetchOptions,
     triggerNetworkRequest,
     APIError,

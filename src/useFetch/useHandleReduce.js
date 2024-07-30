@@ -4,6 +4,9 @@ import consts from './consts';
 import triggerNetworkRequest from './triggerNetworkRequest';
 import parseNetworkData from './parseNetworkData';
 import handleFetch from './handleFetch';
+import { AbortError, NetworkError } from './errorInstances';
+
+const { isArrayValid, typeOptions, abortErrorNames, networkErrorMessages } = consts;
 
 const useHandleReduce = (infoRef, updateResponseRef) => {
     const handleStaticMethods = useCallback(
@@ -14,7 +17,19 @@ const useHandleReduce = (infoRef, updateResponseRef) => {
                 )
             ).then(async (results) => {
                 const data = await Promise.all(
-                    results.map((el) => parseNetworkData(el?.value || el, currentFunc.type))
+                    results.map((el) => {
+                        if (el?.status === 'rejected') {
+                            if (
+                                el?.reason instanceof NetworkError ||
+                                el?.reason instanceof AbortError
+                            ) {
+                                throw el.reason;
+                            }
+                            return { ...el, data: null };
+                        }
+
+                        return parseNetworkData(el?.value || el, currentFunc.type);
+                    })
                 );
 
                 updateResponseRef(id, data);
@@ -26,7 +41,7 @@ const useHandleReduce = (infoRef, updateResponseRef) => {
 
     const handleReduce = useCallback(
         (options, value) => {
-            if (!consts.isArrayValid(options)) {
+            if (!isArrayValid(options)) {
                 console.warn(`Passed options are: ${options}`);
                 return;
             }
@@ -48,7 +63,7 @@ const useHandleReduce = (infoRef, updateResponseRef) => {
                         currentFunc?.reqs.filter((el) => !el?.url).length === 0
                     ) {
                         let type = 'allSettled';
-                        if (consts.typeOptions.includes(currentFunc?.type)) {
+                        if (typeOptions.includes(currentFunc?.type)) {
                             type = currentFunc.type;
                         }
 
@@ -62,19 +77,31 @@ const useHandleReduce = (infoRef, updateResponseRef) => {
                         if (data && Object.keys(data).length !== 0) {
                             const result = currentFunc.func(data?.data, data?.res, controller);
 
-                            if (consts.isArrayValid(result)) {
+                            if (isArrayValid(result)) {
                                 return handleReduce(result, `${infoRef.current.numOfCalls}_`);
                             }
 
                             if (typeof result?.then === 'function') {
-                                return result.then((value) => {
-                                    updateResponseRef(id, value);
-                                    return Promise.resolve({ data: value });
-                                });
+                                return result
+                                    .then((value) => {
+                                        if (value) updateResponseRef(id, value);
+                                        return Promise.resolve({ data: value ? value : data });
+                                    })
+                                    .catch((err) => {
+                                        if (
+                                            err instanceof DOMException &&
+                                            abortErrorNames.includes(err?.name)
+                                        ) {
+                                            throw new AbortError(err?.message);
+                                        } else if (networkErrorMessages.includes(err?.message)) {
+                                            throw new NetworkError(err?.message);
+                                        }
+                                        throw err;
+                                    });
                             }
                         } else {
                             const result = currentFunc.func();
-                            if (consts.isArrayValid(result)) {
+                            if (isArrayValid(result)) {
                                 return handleReduce(result, `${infoRef.current.numOfCalls}_`);
                             }
                         }

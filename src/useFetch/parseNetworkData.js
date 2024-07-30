@@ -1,6 +1,12 @@
 import { APIError } from './errorInstances';
 
 const parseNetworkData = async (res, type) => {
+    if (!(res instanceof Response)) {
+        throw new Error(
+            `The first argument passed is not an instance of Response: ${JSON.stringify(res)}`
+        );
+    }
+
     const text = await res.text();
 
     try {

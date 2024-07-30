@@ -1,17 +1,19 @@
 import { AbortError, NetworkError } from './errorInstances';
+import consts from './consts';
+
+const { abortErrorNames, networkErrorMessages } = consts;
 
 const triggerNetworkRequest = async (url, options = {}) => {
     try {
         return await fetch(url, options);
     } catch (err) {
-        if (
-            err instanceof DOMException &&
-            (err?.name === 'AbortError' || err?.name === 'ABORT_ERR')
-        ) {
+        if (err instanceof DOMException && abortErrorNames.includes(err?.name)) {
             throw new AbortError(err?.message, url);
-        } else {
+        } else if (networkErrorMessages.includes(err?.message)) {
             throw new NetworkError(err?.message, url);
         }
+
+        throw err;
     }
 };
 

@@ -1,20 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useFetchContext } from '../fetchContetxt/useFetchContext';
+import { useFetchOptions } from '../fetchContetxt/useFetchContext';
 import { APIError, AbortError, NetworkError } from './errorInstances';
 import useHandleReduce from './useHandleReduce';
 import consts from './consts';
 
-const useFetch = (fetchOptions = consts.defaultFetchOptions) => {
-    const [info, setInfo] = useState(consts.initialInfo);
+const { defaultFetchOptions, initialInfo, initialRefInfo, isArrayValid } = consts;
 
-    const infoRef = useRef(consts.initialRefInfo);
+const useFetch = (fetchOptions = defaultFetchOptions) => {
+    const [info, setInfo] = useState(initialInfo);
+
+    const infoRef = useRef(initialRefInfo);
     const justUnMounted = useRef(false);
 
-    const [, { setIsOnline }] = useFetchContext();
+    const isOnlineDispatch = useFetchOptions();
 
     const handleResetError = useCallback(() => {
-        setInfo((prevInfo) => ({ ...prevInfo, error: consts.initialInfo.error }));
+        setInfo((prevInfo) => ({ ...prevInfo, error: initialInfo.error }));
     }, []);
 
     const resetInfoRef = useCallback(() => {
@@ -29,47 +31,56 @@ const useFetch = (fetchOptions = consts.defaultFetchOptions) => {
         (err) => {
             if (!err) {
                 console.warn(`Error object not found: ${err}`);
-                setInfo(consts.initialInfo);
+                setInfo(initialInfo);
                 return;
             }
 
-            let error = { error: false, msg: null, ...err, err };
+            let error = {
+                error: false,
+                msg: null,
+                ...err,
+                errInstance: err,
+                isAborted: err instanceof AbortError,
+            };
 
-            if (err instanceof NetworkError) {
-                setIsOnline(false);
-                error = { error: true, msg: null, ...err, err };
+            if (
+                err instanceof NetworkError &&
+                typeof isOnlineDispatch?.handleConfirmIsOnline === 'function'
+            ) {
+                isOnlineDispatch?.handleConfirmIsOnline(err);
+                error = { error: true, msg: null, ...err, errInstance: err };
             } else if (err instanceof APIError) {
-                error = { error: true, msg: null, ...err, err };
+                error = { error: true, msg: null, ...err, errInstance: err };
             } else if (!(err instanceof AbortError)) {
                 console.error(err);
             }
 
             if (!justUnMounted.current) {
                 resetInfoRef();
-                setInfo({ ...consts.initialInfo, error });
+                setInfo({ ...initialInfo, error });
             }
 
-            if (fetchOptions?.catchHandlerPassed) return Promise.reject(error);
+            if (fetchOptions?.hasAdditionalCatchMethod) return Promise.reject(error);
         },
-        [fetchOptions?.catchHandlerPassed, resetInfoRef, setIsOnline]
+        [fetchOptions?.hasAdditionalCatchMethod, resetInfoRef, isOnlineDispatch]
     );
 
     const handleReduce = useHandleReduce(infoRef, updateResponseRef);
 
     const doFetch = useCallback(
         (options) => {
-            if (consts.isArrayValid(options)) {
+            if (isArrayValid(options)) {
                 const controller = new AbortController();
-                infoRef.current = { options, response: {}, controller, numOfCalls: 0 };
+                infoRef.current = { response: {}, controller, numOfCalls: 0 };
 
-                setInfo({ ...consts.initialInfo, isLoading: true });
+                setInfo({ ...initialInfo, isLoading: true });
 
                 return handleReduce(options)
                     .then(() => {
                         const response = { ...infoRef.current.response };
 
                         if (!justUnMounted.current) {
-                            setInfo({ ...consts.initialInfo, response });
+                            setInfo({ ...initialInfo, response });
                             resetInfoRef();
                         }
 
