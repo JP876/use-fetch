@@ -1,14 +1,21 @@
 import { useCallback } from 'react';
 
-import consts from './consts';
-import triggerNetworkRequest from './triggerNetworkRequest';
-import parseNetworkData from './parseNetworkData';
-import handleFetch from './handleFetch';
-import { AbortError, NetworkError } from './errorInstances';
+import consts from '../consts';
+import { AbortError, NetworkError } from '../errorInstances';
+import useTriggerNetworkRequest from './useTriggerNetworkRequest';
+import useParseNetworkData from './useParseNetworkData';
+import useFetchHandler from './useFetchHandler';
+import useCatchErrorInstance from './useCatchErrorInstance';
 
-const { isArrayValid, typeOptions, abortErrorNames, networkErrorMessages } = consts;
+const { isArrayValid, typeOptions } = consts;
 
 const useHandleReduce = (infoRef, updateResponseRef) => {
+    const triggerNetworkRequest = useTriggerNetworkRequest();
+    const parseNetworkData = useParseNetworkData();
+    const handleFetch = useFetchHandler();
+
+    const handleCatch = useCatchErrorInstance();
+
     const handleStaticMethods = useCallback(
         (currentFunc, signal, id) => {
             return Promise[currentFunc.type](
@@ -36,7 +43,7 @@ const useHandleReduce = (infoRef, updateResponseRef) => {
                 return Promise.resolve({ data, res: results });
             });
         },
-        [updateResponseRef]
+        [parseNetworkData, triggerNetworkRequest, updateResponseRef]
     );
 
     const handleReduce = useCallback(
@@ -87,17 +94,7 @@ const useHandleReduce = (infoRef, updateResponseRef) => {
                                         if (value) updateResponseRef(id, value);
                                         return Promise.resolve({ data: value ? value : data });
                                     })
-                                    .catch((err) => {
-                                        if (
-                                            err instanceof DOMException &&
-                                            abortErrorNames.includes(err?.name)
-                                        ) {
-                                            throw new AbortError(err?.message);
-                                        } else if (networkErrorMessages.includes(err?.message)) {
-                                            throw new NetworkError(err?.message);
-                                        }
-                                        throw err;
-                                    });
+                                    .catch(handleCatch);
                             }
                         } else {
                             const result = currentFunc.func();
@@ -113,7 +110,7 @@ const useHandleReduce = (infoRef, updateResponseRef) => {
                 });
             }, Promise.resolve());
         },
-        [infoRef, handleStaticMethods, updateResponseRef]
+        [infoRef, handleStaticMethods, handleFetch, updateResponseRef, handleCatch]
     );
 
     return handleReduce;

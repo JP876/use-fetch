@@ -1,185 +1,166 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-    FetchProvider,
-    useFetchDispatch,
+import useFetch, {
+    APIError,
+    useTriggerNetworkRequest,
     useFetchStatusState,
-} from '../fetchContetxt/useFetchContext';
-import useFetch from '../useFetch';
-import triggerNetworkRequest from '../useFetch/triggerNetworkRequest';
-import { APIError } from '../useFetch/errorInstances';
+    FetchProvider,
+} from '../';
 
 const getRandomNum = (min, max) => {
     return Math.round(Math.random() * (max - min) + min);
 };
 
 const baseUrl = 'https://jsonplaceholder.typicode.com';
-const textBody =
-    'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer euismod massa sit amet ante fermentum, sed viverra justo mollis. Nunc faucibus ac elit vel interdum.';
+
+const textBody = `Lorem ipsum dolor sit amet, consectetur adipiscin elit. 
+    Integer euismod massa sit amet ante fermentum, sed viverra justo mollis. 
+    Nunc faucibus ac elit vel interdum.`;
+
+const keys = [
+    { id: 'isLoading', label: 'Loading' },
+    { id: 'error', label: 'Error', key: 'error' },
+    { id: 'error', label: 'Error message', key: 'msg' },
+    { id: 'response', label: 'Response', key: 'randomUser' },
+];
+
+const fetchUrls = {
+    posts: `${baseUrl}/posts`,
+    users: `${baseUrl}/users`,
+    todos: `${baseUrl}/todos`,
+    photos: `${baseUrl}/photos`,
+    comments: `${baseUrl}/comments`,
+};
 
 const FetchContainer = ({ initialFetch }) => {
     const justMounted = useRef(true);
 
-    const { doFetch, isLoading, response, error, handleResetError, controller } = useFetch({
-        abortOnUnmount: false,
-        hasAdditionalCatchMethod: true,
+    const triggerNetworkRequest = useTriggerNetworkRequest();
+    const fetchObj = useFetch({
+        abortOnUnmount: true,
+        hasAdditionalCatchMethod: false,
     });
-    const { error: isError, msg } = error;
 
-    const {
-        doFetch: fetchTest,
-        isLoading: testLoading,
-        error: { msg: testMsg },
-    } = useFetch();
+    const { doFetch, error, isLoading, response, controller, handleResetError } = fetchObj;
 
-    const { setIsOnline } = useFetchDispatch();
+    const handleFetch = useCallback(
+        (event) => {
+            if (event?.target) {
+                const type = event.target.dataset?.type;
 
-    const fetchCheck = useCallback(() => {
-        fetchTest([{ url: `${baseUrl}/posts` }, { func: () => setIsOnline(true) }]);
-    }, [fetchTest, setIsOnline]);
-
-    const handleTestFetch = useCallback(
-        (type) => {
-            const url = type === 'error' ? 'posts1' : 'posts';
+                if (type === 'error') {
+                    fetchUrls.users = `${baseUrl}/userss`;
+                } else {
+                    fetchUrls.users = `${baseUrl}/users`;
+                }
+            }
 
             doFetch([
                 {
                     // type options: 'all' || 'allSettled'
                     // default type: 'allSettled'
                     // type: 'all',
-                    reqs: [{ url: `${baseUrl}/posts` }, { url: `${baseUrl}/users` }],
+                    reqs: [{ url: fetchUrls.posts }, { url: fetchUrls.users }],
                 },
                 {
                     func: (data, res, controller) => {
                         const [posts, users] = data;
-                        const randomUser = users[getRandomNum(0, users?.length)];
 
-                        return [{ url: `${baseUrl}/users/${randomUser?.id || 1}` }];
+                        if (!Array.isArray(users)) {
+                            controller.abort();
+                            return;
+                        }
+
+                        const randomUser = users[getRandomNum(0, users?.length)];
+                        if (!randomUser?.id) controller.abort();
+
+                        return [
+                            {
+                                id: 'randomUser',
+                                url: `${fetchUrls.users}/${randomUser?.id}`,
+                            },
+                            {
+                                func: (user) => {
+                                    // console.log(user);
+
+                                    return [
+                                        {
+                                            // id: "commentsAndPhotos",
+                                            reqs: [
+                                                { url: fetchUrls.comments },
+                                                { url: fetchUrls.photos },
+                                            ],
+                                        },
+                                    ];
+                                },
+                            },
+                            {
+                                // id: "message",
+                                func: () =>
+                                    new Promise((res) => {
+                                        setTimeout(() => res('Message'), 500);
+                                    }),
+                            },
+                        ];
                     },
                 },
                 {
                     func: (data, res, controller) => {
                         return new Promise((res) => res()).then(async () => {
-                            const reqRes = await fetch(`${baseUrl}/todos`, {
+                            const reqRes = await triggerNetworkRequest(fetchUrls.todos, {
                                 signal: controller?.signal,
                             });
+
+                            if (!reqRes?.ok) throw new APIError('Message', reqRes);
+
                             const data = await reqRes.json();
                             return Promise.resolve(data);
                         });
                     },
                 },
-                {
-                    id: 'addedPost',
-                    url: `${baseUrl}/${url}`,
-                    options: {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            title: 'test',
-                            body: textBody,
-                            userId: 2,
-                        }),
-                        headers: {
-                            'Content-type': 'application/json; charset=UTF-8',
-                        },
-                    },
-                },
-                {
-                    func: (data, res, controller) => {
-                        return new Promise((resolve) => setTimeout(resolve, 2000)).then(
-                            async () => {
-                                const reqRes = await triggerNetworkRequest(`${baseUrl}/users`, {
-                                    signal: controller?.signal,
-                                });
-
-                                if (!reqRes?.ok) throw new APIError('Message', reqRes);
-
-                                const data = await reqRes.json();
-                                return Promise.resolve(data);
-                            }
-                        );
-                    },
-                },
-                /* { url: `${baseUrl}/users` },
-                {
-                    func: (data, res, controller) => {
-                        // console.log(data);
-                    },
-                }, */
-                /* {
-                    func: () =>
-                        new Promise((resolve) => {
-                            return resolve('yooo');
-                        }),
-                }, */
             ])
-                .then((a) => {
-                    console.log(a);
+                .then((result) => {
+                    console.log('Then');
+                    console.log(result);
                 })
-                .catch((e) => {
-                    console.log(e);
-                    /* if (e?.err instanceof APIError) {
-                        console.log(e);
-                    } */
+                .catch((err) => {
+                    // catch runs if catchHandlerPassed was passed as option to useFetch
+                    console.log('Catch');
+                    console.log(err);
                 });
         },
-        [doFetch]
+        [doFetch, triggerNetworkRequest]
     );
 
     useEffect(() => {
-        if (justMounted.current && initialFetch) {
-            handleTestFetch();
+        if (initialFetch && justMounted.current) {
+            handleFetch();
         }
         justMounted.current = false;
-    }, [handleTestFetch, initialFetch]);
-
-    /* useEffect(() => {
-        if (controller instanceof AbortController) {
-            setTimeout(() => controller?.abort(), 200);
-        }
-    }, [controller]); */
+    }, [handleFetch, initialFetch]);
 
     return (
-        <>
-            <div className="btn-container">
-                <button disabled={isLoading} onClick={handleTestFetch}>
-                    Test Correct
-                </button>
-
-                <button disabled={isLoading} onClick={() => handleTestFetch('error')}>
-                    Test Wrong
-                </button>
-                <button disabled={isLoading || !error} onClick={handleResetError}>
-                    Reset error
-                </button>
-
-                <button disabled={isLoading} onClick={fetchCheck}>
-                    Test Connection
+        <div style={{ display: 'flex', gap: '.5rem', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', gap: '.5rem' }}>
+                <button onClick={handleFetch}>Fetch</button>
+                <button data-type="error" onClick={handleFetch}>
+                    Fetch with error
                 </button>
             </div>
 
-            <div className="status-container">
+            <div style={{ marginLeft: '2rem' }}>
                 <ul>
-                    <li>Loading: {isLoading ? 'True' : 'False'}</li>
-                    <li>Error: {isError ? 'True' : 'False'}</li>
-                    <li>Error message: {msg ? JSON.stringify(msg) : 'False'}</li>
-                    <li>IsOnline message: {testMsg ? JSON.stringify(msg) : 'False'}</li>
-                    {response?.addedPost && (
-                        <li>
-                            <h4>Response 0:</h4>
-                            <p style={{ marginTop: '.4rem' }}>
-                                Title: <span>{response?.addedPost?.title}</span>
-                            </p>
-                            <p style={{ marginTop: '.4rem' }}>
-                                Body: <span>{response?.addedPost?.body}</span>
-                            </p>
-                            <p style={{ marginTop: '.4rem' }}>
-                                UserId: <span>{response?.addedPost?.userId}</span>
-                            </p>
+                    {keys.map(({ id, label, key }) => (
+                        <li key={key || id}>
+                            {label}:{' '}
+                            {key
+                                ? JSON.stringify(fetchObj[id]?.[key])
+                                : JSON.stringify(fetchObj[id])}
                         </li>
-                    )}
+                    ))}
                 </ul>
             </div>
-        </>
+        </div>
     );
 };
 
@@ -220,6 +201,7 @@ const TestContainer = () => {
                     <button onClick={() => setMount((prevValue) => !prevValue)}>
                         {mount ? 'Unmount' : 'Mount'}
                     </button>
+
                     <div style={{ display: 'flex', alignItems: 'center' }}>
                         <input
                             type="checkbox"
@@ -228,16 +210,11 @@ const TestContainer = () => {
                             checked={initialFetch}
                             onChange={() => setInitialFetch((prevValue) => !prevValue)}
                         />
-                        <label
-                            style={{
-                                fontSize: '1.4rem',
-                                marginLeft: '.5rem',
-                            }}
-                            htmlFor="fetch"
-                        >
+                        <label style={{ fontSize: '1.4rem', marginLeft: '.5rem' }} htmlFor="fetch">
                             Initial Fetch
                         </label>
                     </div>
+
                     <p style={{ fontSize: '1.4rem', marginLeft: '1rem' }}>
                         IsOnline: {isOnline ? 'True' : 'False'}
                     </p>
@@ -249,16 +226,8 @@ const TestContainer = () => {
     );
 };
 
-const confirmIsOnline = (err) => {
-    return new Promise((resolve, reject) => {
-        return fetch(`${baseUrl}/todos`)
-            .then(() => resolve())
-            .catch(() => reject());
-    });
-};
-
 const Test = () => (
-    <FetchProvider confirmIsOnline={confirmIsOnline}>
+    <FetchProvider>
         <TestContainer />
     </FetchProvider>
 );

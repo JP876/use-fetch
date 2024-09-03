@@ -4,9 +4,6 @@
     "description": "Simple useFetch hook for sequential requests",
     "main": "dist/main.js",
     "module": "dist/index.es.js",
-    "files": [
-        "dist"
-    ],
     "keywords": [
         "react",
         "custom-hook"

@@ -7,10 +7,22 @@ const checkFetchSchema = (arr) => {
     if (!Array.isArray(arr) || arr.length === 0) return false;
 };
 
+const defaultNetworkErrorMessages = [
+    'TypeError: Failed to fetch', // Chrome
+    'Failed to fetch', // Chrome, Edge
+    'NetworkError when attempting to fetch resource.', // Firefox
+    'Load failed', // iOS Safari,
+];
+
+const defaultAbortErrorNames = ['AbortError', 'ABORT_ERR'];
+
 const typeOptions = ['all', 'allSettled'];
 // TODO: mode: fetch | XMLHttpRequest
 const defaultFetchOptions = { abortOnUnmount: true, hasAdditionalCatchMethod: false };
-const defaultFetchProviderOptions = { confirmIsOnline: null, logErrors: true };
+const defaultFetchProviderOptions = {
+    networkErrorMessages: defaultNetworkErrorMessages,
+    abortErrorNames: defaultAbortErrorNames,
+};
 
 const initialInfo = {
     response: {},
@@ -31,15 +43,6 @@ const initialRefInfo = {
     numOfCalls: 0,
 };
 
-const networkErrorMessages = [
-    'TypeError: Failed to fetch', // Chrome
-    'Failed to fetch', // Chrome, Edge
-    'NetworkError when attempting to fetch resource.', // Firefox
-    'Load failed', // iOS Safari,
-];
-
-const abortErrorNames = ['AbortError', 'ABORT_ERR'];
-
 const consts = {
     isArrayValid,
     checkFetchSchema,
@@ -48,8 +51,8 @@ const consts = {
     typeOptions,
     initialInfo,
     initialRefInfo,
-    networkErrorMessages,
-    abortErrorNames,
+    defaultNetworkErrorMessages,
+    defaultAbortErrorNames,
 };
 
 export default consts;

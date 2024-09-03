@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useFetchOptions } from '../fetchContetxt/useFetchContext';
 import { APIError, AbortError, NetworkError } from './errorInstances';
-import useHandleReduce from './useHandleReduce';
+import useHandleReduce from './hooks/useHandleReduce';
 import consts from './consts';
 
 const { defaultFetchOptions, initialInfo, initialRefInfo, isArrayValid } = consts;
@@ -42,6 +42,7 @@ const useFetch = (fetchOptions = defaultFetchOptions) => {
                 errInstance: err,
                 isAborted: err instanceof AbortError,
             };
+            const response = { ...infoRef.current.response };
 
             if (
                 err instanceof NetworkError &&
@@ -61,6 +62,7 @@ const useFetch = (fetchOptions = defaultFetchOptions) => {
             }
 
             if (fetchOptions?.hasAdditionalCatchMethod) return Promise.reject(error);
+            return Promise.resolve({ data: response, error });
         },
         [fetchOptions?.hasAdditionalCatchMethod, resetInfoRef, isOnlineDispatch]
     );
@@ -84,7 +86,7 @@ const useFetch = (fetchOptions = defaultFetchOptions) => {
                             resetInfoRef();
                         }
 
-                        return Promise.resolve({ data: response });
+                        return Promise.resolve({ data: response, error: null });
                     })
                     .catch(handleCatch);
             }

@@ -4,19 +4,21 @@ import {
     useFetchDispatch,
 } from './fetchContetxt/useFetchContext';
 import useFetch from './useFetch';
+import useTriggerNetworkRequest from './useFetch/hooks/useTriggerNetworkRequest';
 import consts from './useFetch/consts';
-import triggerNetworkRequest from './useFetch/triggerNetworkRequest';
 import { APIError, AbortError, NetworkError } from './useFetch/errorInstances';
 
-const defaultFetchOptions = consts.defaultFetchOptions;
+const { defaultFetchOptions, defaultAbortErrorNames, defaultNetworkErrorMessages } = consts;
 
 export {
     useFetch as default,
     FetchProvider,
     useFetchStatusState,
     useFetchDispatch,
+    useTriggerNetworkRequest,
     defaultFetchOptions,
-    triggerNetworkRequest,
+    defaultAbortErrorNames,
+    defaultNetworkErrorMessages,
     APIError,
     AbortError,
     NetworkError,
