@@ -11,6 +11,7 @@ const useCatchErrorInstance = () => {
         (err, ...rest) => {
             let abortErrorNames = providerOptions?.abortErrorNames;
             let networkErrorMessages = providerOptions?.networkErrorMessages;
+            console.log(err);
 
             if (!Array.isArray(abortErrorNames)) {
                 abortErrorNames = consts.defaultAbortErrorNames;

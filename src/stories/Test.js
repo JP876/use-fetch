@@ -57,27 +57,29 @@ const FetchContainer = ({ initialFetch }) => {
 
             doFetch([
                 {
+                    id: 'reqs',
                     // type options: 'all' || 'allSettled'
                     // default type: 'allSettled'
                     // type: 'all',
                     reqs: [{ url: fetchUrls.posts }, { url: fetchUrls.users }],
                 },
                 {
+                    // id: 'after-reqs',
                     func: (data, res, controller) => {
                         const [posts, users] = data;
 
-                        if (!Array.isArray(users)) {
+                        /* if (!Array.isArray(users)) {
                             controller.abort();
-                            return;
-                        }
+                            return
+                        } */
 
-                        const randomUser = users[getRandomNum(0, users?.length)];
-                        if (!randomUser?.id) controller.abort();
+                        let randomUser = users?.[getRandomNum(0, users?.length)];
+                        if (!randomUser?.id) randomUser = { id: 1 };
 
                         return [
                             {
                                 id: 'randomUser',
-                                url: `${fetchUrls.users}/${randomUser?.id}`,
+                                url: `${fetchUrls.users}/${randomUser?.id || 0}`,
                             },
                             {
                                 func: (user) => {
@@ -85,7 +87,7 @@ const FetchContainer = ({ initialFetch }) => {
 
                                     return [
                                         {
-                                            // id: "commentsAndPhotos",
+                                            // id: 'commentsAndPhotos',
                                             reqs: [
                                                 { url: fetchUrls.comments },
                                                 { url: fetchUrls.photos },
@@ -105,6 +107,7 @@ const FetchContainer = ({ initialFetch }) => {
                     },
                 },
                 {
+                    id: 'todos',
                     func: (data, res, controller) => {
                         return new Promise((res) => res()).then(async () => {
                             const reqRes = await triggerNetworkRequest(fetchUrls.todos, {

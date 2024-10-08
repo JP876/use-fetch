@@ -20,12 +20,17 @@ const useFetch = (fetchOptions = defaultFetchOptions) => {
     }, []);
 
     const resetInfoRef = useCallback(() => {
-        infoRef.current = { response: {}, controller: null, numOfCalls: 0 };
+        infoRef.current = { response: {}, controller: null, numOfCalls: 0, failedRequests: null };
     }, []);
 
     const updateResponseRef = useCallback((id, res) => {
         infoRef.current.response = { ...infoRef.current.response, [id]: res };
     }, []);
+    const updateFailedRequestsRef = useCallback((req) => {
+        infoRef.current.failedRequests = [...(infoRef.current.failedRequests || []), { ...req }];
+    }, []);
+
+    const handleReduce = useHandleReduce(infoRef, updateResponseRef, updateFailedRequestsRef);
 
     const handleCatch = useCallback(
         (err) => {
@@ -41,6 +46,7 @@ const useFetch = (fetchOptions = defaultFetchOptions) => {
                 ...err,
                 errInstance: err,
                 isAborted: err instanceof AbortError,
+                failedRequests: infoRef.current.failedRequests,
             };
             const response = { ...infoRef.current.response };
 
@@ -49,9 +55,9 @@ const useFetch = (fetchOptions = defaultFetchOptions) => {
                 typeof isOnlineDispatch?.handleConfirmIsOnline === 'function'
             ) {
                 isOnlineDispatch?.handleConfirmIsOnline(err);
-                error = { error: true, msg: null, ...err, errInstance: err };
+                error = { ...error, error: true };
             } else if (err instanceof APIError) {
-                error = { error: true, msg: null, ...err, errInstance: err };
+                error = { ...error, error: true };
             } else if (!(err instanceof AbortError)) {
                 console.error(err);
             }
@@ -67,13 +73,11 @@ const useFetch = (fetchOptions = defaultFetchOptions) => {
         [fetchOptions?.hasAdditionalCatchMethod, resetInfoRef, isOnlineDispatch]
     );
 
-    const handleReduce = useHandleReduce(infoRef, updateResponseRef);
-
     const doFetch = useCallback(
         (options) => {
             if (isArrayValid(options)) {
                 const controller = new AbortController();
-                infoRef.current = { response: {}, controller, numOfCalls: 0 };
+                infoRef.current = { response: {}, controller, numOfCalls: 0, failedRequests: null };
 
                 setInfo({ ...initialInfo, isLoading: true });
 
