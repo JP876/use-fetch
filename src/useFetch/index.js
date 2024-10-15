@@ -68,7 +68,7 @@ const useFetch = (fetchOptions = defaultFetchOptions) => {
             }
 
             if (fetchOptions?.hasAdditionalCatchMethod) return Promise.reject(error);
-            return Promise.resolve({ data: response, error });
+            return Promise.resolve(response);
         },
         [fetchOptions?.hasAdditionalCatchMethod, resetInfoRef, isOnlineDispatch]
     );
@@ -90,7 +90,7 @@ const useFetch = (fetchOptions = defaultFetchOptions) => {
                             resetInfoRef();
                         }
 
-                        return Promise.resolve({ data: response, error: null });
+                        return Promise.resolve(response);
                     })
                     .catch(handleCatch);
             }

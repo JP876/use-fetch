@@ -38,7 +38,7 @@ const FetchContainer = ({ initialFetch }) => {
     const triggerNetworkRequest = useTriggerNetworkRequest();
     const fetchObj = useFetch({
         abortOnUnmount: true,
-        hasAdditionalCatchMethod: false,
+        hasAdditionalCatchMethod: true,
     });
 
     const { doFetch, error, isLoading, response, controller, handleResetError } = fetchObj;
@@ -68,13 +68,14 @@ const FetchContainer = ({ initialFetch }) => {
                     func: (data, res, controller) => {
                         const [posts, users] = data;
 
-                        /* if (!Array.isArray(users)) {
+                        if (!Array.isArray(users)) {
                             controller.abort();
-                            return
-                        } */
+                            return;
+                        }
 
-                        let randomUser = users?.[getRandomNum(0, users?.length)];
-                        if (!randomUser?.id) randomUser = { id: 1 };
+                        let randomUser = users[getRandomNum(0, users?.length)];
+                        // if (!randomUser?.id) randomUser = { id: 1 };
+                        console.log('yoo');
 
                         return [
                             {
@@ -127,7 +128,7 @@ const FetchContainer = ({ initialFetch }) => {
                     console.log(result);
                 })
                 .catch((err) => {
-                    // catch runs if catchHandlerPassed was passed as option to useFetch
+                    // catch runs if catchHandlerPassed was passed as true to useFetch
                     console.log('Catch');
                     console.log(err);
                 });
