@@ -73,9 +73,8 @@ const FetchContainer = ({ initialFetch }) => {
                             return;
                         }
 
-                        let randomUser = users[getRandomNum(0, users?.length)];
+                        let randomUser = users[getRandomNum(0, users.length)];
                         // if (!randomUser?.id) randomUser = { id: 1 };
-                        console.log('yoo');
 
                         return [
                             {
@@ -101,7 +100,7 @@ const FetchContainer = ({ initialFetch }) => {
                                 // id: "message",
                                 func: () =>
                                     new Promise((res) => {
-                                        setTimeout(() => res('Message'), 500);
+                                        setTimeout(() => res('Message'), 2000);
                                     }),
                             },
                         ];
