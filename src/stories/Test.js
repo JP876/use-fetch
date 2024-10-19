@@ -38,7 +38,7 @@ const FetchContainer = ({ initialFetch }) => {
     const triggerNetworkRequest = useTriggerNetworkRequest();
     const fetchObj = useFetch({
         abortOnUnmount: true,
-        hasAdditionalCatchMethod: true,
+        hasAdditionalCatchMethod: false,
     });
 
     const { doFetch, error, isLoading, response, controller, handleResetError } = fetchObj;
@@ -55,7 +55,36 @@ const FetchContainer = ({ initialFetch }) => {
                 }
             }
 
+            /* doFetch([
+                { url: fetchUrls.comments },
+                { url: fetchUrls.photos },
+                { url: fetchUrls.posts },
+            ]);
+            return; */
+
             doFetch([
+                /* {
+                    id: 'message-1',
+                    func: () =>
+                        new Promise((res) => {
+                            setTimeout(() => res('Message-1'), 2000);
+                        }),
+                }, */
+                {
+                    id: 'todos-1',
+                    func: (data, res, controller) => {
+                        return new Promise((res) => res()).then(async () => {
+                            const reqRes = await triggerNetworkRequest(fetchUrls.todos, {
+                                signal: controller?.signal,
+                            });
+
+                            if (!reqRes?.ok) throw new APIError('Message', reqRes);
+
+                            const data = await reqRes.json();
+                            return Promise.resolve(data);
+                        });
+                    },
+                },
                 {
                     id: 'reqs',
                     // type options: 'all' || 'allSettled'
@@ -68,12 +97,12 @@ const FetchContainer = ({ initialFetch }) => {
                     func: (data, res, controller) => {
                         const [posts, users] = data;
 
-                        if (!Array.isArray(users)) {
+                        /* if (!Array.isArray(users)) {
                             controller.abort();
                             return;
-                        }
+                        } */
 
-                        let randomUser = users[getRandomNum(0, users.length)];
+                        let randomUser = users[getRandomNum(0, users?.length)];
                         // if (!randomUser?.id) randomUser = { id: 1 };
 
                         return [
@@ -100,14 +129,14 @@ const FetchContainer = ({ initialFetch }) => {
                                 // id: "message",
                                 func: () =>
                                     new Promise((res) => {
-                                        setTimeout(() => res('Message'), 2000);
+                                        setTimeout(() => res('Message-2'), 2000);
                                     }),
                             },
                         ];
                     },
                 },
                 {
-                    id: 'todos',
+                    id: 'todos-2',
                     func: (data, res, controller) => {
                         return new Promise((res) => res()).then(async () => {
                             const reqRes = await triggerNetworkRequest(fetchUrls.todos, {
@@ -168,8 +197,8 @@ const FetchContainer = ({ initialFetch }) => {
 };
 
 const TestContainer = () => {
-    const [mount, setMount] = useState(true);
-    const [initialFetch, setInitialFetch] = useState(false);
+    const [mount, setMount] = useState(false);
+    const [initialFetch, setInitialFetch] = useState(true);
 
     const { isOnline } = useFetchStatusState();
 
