@@ -18,7 +18,12 @@ const defaultAbortErrorNames = ['AbortError', 'ABORT_ERR'];
 
 const typeOptions = ['all', 'allSettled'];
 // TODO: mode: fetch | XMLHttpRequest
-const defaultFetchOptions = { abortOnUnmount: true, hasAdditionalCatchMethod: false };
+const defaultFetchOptions = {
+    abortOnUnmount: true,
+    hasCatchMethod: false,
+    fetchOnce: false,
+    ignoreFirst: false,
+};
 const defaultFetchProviderOptions = {
     networkErrorMessages: defaultNetworkErrorMessages,
     abortErrorNames: defaultAbortErrorNames,

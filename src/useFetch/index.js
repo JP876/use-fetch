@@ -12,6 +12,7 @@ const useFetch = (fetchOptions = defaultFetchOptions) => {
 
     const infoRef = useRef(initialRefInfo);
     const justUnMounted = useRef(false);
+    const hasFetched = useRef(0);
 
     const isOnlineDispatch = useFetchOptions();
 
@@ -67,35 +68,62 @@ const useFetch = (fetchOptions = defaultFetchOptions) => {
                 setInfo({ ...initialInfo, error });
             }
 
-            if (fetchOptions?.hasAdditionalCatchMethod) return Promise.reject(error);
+            if (fetchOptions?.hasCatchMethod) return Promise.reject(error);
             return Promise.resolve(response);
         },
-        [fetchOptions?.hasAdditionalCatchMethod, resetInfoRef, isOnlineDispatch]
+        [fetchOptions?.hasCatchMethod, resetInfoRef, isOnlineDispatch]
     );
 
     const doFetch = useCallback(
         (options) => {
-            if (isArrayValid(options)) {
-                const controller = new AbortController();
-                infoRef.current = { response: {}, controller, numOfCalls: 0, failedRequests: null };
-
-                setInfo({ ...initialInfo, isLoading: true });
-
-                return handleReduce(options)
-                    .then(() => {
-                        const response = { ...infoRef.current.response };
-
-                        if (!justUnMounted.current) {
-                            setInfo({ ...initialInfo, response });
-                            resetInfoRef();
-                        }
-
-                        return Promise.resolve(response);
-                    })
-                    .catch(handleCatch);
+            if (fetchOptions?.fetchOnce && fetchOptions?.ignoreFirst) {
+                console.warn(
+                    'The fetch options fetchOnce and ignoreFirst cannot both be set to true simultaneously.'
+                );
+                return new Promise((res) => res());
             }
+
+            if (!isArrayValid(options)) {
+                console.warn('The first argument must be an array.');
+                return new Promise((res) => res());
+            }
+
+            if (fetchOptions?.fetchOnce && hasFetched.current) {
+                return new Promise((res) => res());
+            }
+
+            if (fetchOptions?.ignoreFirst && !hasFetched.current) {
+                hasFetched.current = ++hasFetched.current;
+                return new Promise((res) => res());
+            }
+
+            const controller = new AbortController();
+
+            infoRef.current = { response: {}, controller, numOfCalls: 0, failedRequests: null };
+            hasFetched.current = ++hasFetched.current;
+
+            setInfo({ ...initialInfo, isLoading: true });
+
+            return handleReduce(options)
+                .then(() => {
+                    const response = { ...infoRef.current.response };
+
+                    if (!justUnMounted.current) {
+                        setInfo({ ...initialInfo, response });
+                        resetInfoRef();
+                    }
+
+                    return Promise.resolve(response);
+                })
+                .catch(handleCatch);
         },
-        [handleCatch, handleReduce, resetInfoRef]
+        [
+            fetchOptions?.fetchOnce,
+            fetchOptions?.ignoreFirst,
+            handleCatch,
+            handleReduce,
+            resetInfoRef,
+        ]
     );
 
     useEffect(() => {

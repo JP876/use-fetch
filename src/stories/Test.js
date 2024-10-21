@@ -38,7 +38,9 @@ const FetchContainer = ({ initialFetch }) => {
     const triggerNetworkRequest = useTriggerNetworkRequest();
     const fetchObj = useFetch({
         abortOnUnmount: true,
-        hasAdditionalCatchMethod: false,
+        hasCatchMethod: false,
+        // fetchOnce: true,
+        // ignoreFirst: true,
     });
 
     const { doFetch, error, isLoading, response, controller, handleResetError } = fetchObj;
@@ -97,10 +99,10 @@ const FetchContainer = ({ initialFetch }) => {
                     func: (data, res, controller) => {
                         const [posts, users] = data;
 
-                        /* if (!Array.isArray(users)) {
+                        if (!Array.isArray(users)) {
                             controller.abort();
                             return;
-                        } */
+                        }
 
                         let randomUser = users[getRandomNum(0, users?.length)];
                         // if (!randomUser?.id) randomUser = { id: 1 };
@@ -129,7 +131,7 @@ const FetchContainer = ({ initialFetch }) => {
                                 // id: "message",
                                 func: () =>
                                     new Promise((res) => {
-                                        setTimeout(() => res('Message-2'), 2000);
+                                        setTimeout(() => res('Message-2'), 1000);
                                     }),
                             },
                         ];
@@ -174,8 +176,10 @@ const FetchContainer = ({ initialFetch }) => {
     return (
         <div style={{ display: 'flex', gap: '.5rem', flexDirection: 'column' }}>
             <div style={{ display: 'flex', gap: '.5rem' }}>
-                <button onClick={handleFetch}>Fetch</button>
-                <button data-type="error" onClick={handleFetch}>
+                <button disabled={isLoading} onClick={handleFetch}>
+                    Fetch
+                </button>
+                <button disabled={isLoading} data-type="error" onClick={handleFetch}>
                     Fetch with error
                 </button>
             </div>
