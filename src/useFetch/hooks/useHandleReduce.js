@@ -95,7 +95,7 @@ const useHandleReduce = (infoRef, updateResponseRef, updateFailedRequestsRef) =>
                             if (data && Object.keys(data).length !== 0) {
                                 result = currentFunc.func(data?.data, data?.res, controller);
                             } else {
-                                result = currentFunc.func();
+                                result = currentFunc.func(null, null, controller);
                             }
 
                             if (result !== null) {

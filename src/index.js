@@ -5,6 +5,7 @@ import {
 } from './fetchContetxt/useFetchContext';
 import useFetch from './useFetch';
 import useTriggerNetworkRequest from './useFetch/hooks/useTriggerNetworkRequest';
+import useFetchInfo from './useFetch/hooks/useFetchInfo';
 import consts from './useFetch/consts';
 import { APIError, AbortError, NetworkError } from './useFetch/errorInstances';
 
@@ -16,6 +17,7 @@ export {
     useFetchStatusState,
     useFetchDispatch,
     useTriggerNetworkRequest,
+    useFetchInfo,
     defaultFetchOptions,
     defaultAbortErrorNames,
     defaultNetworkErrorMessages,

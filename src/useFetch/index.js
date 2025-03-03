@@ -127,9 +127,21 @@ const useFetch = (fetchOptions = defaultFetchOptions) => {
     );
 
     useEffect(() => {
+        if (typeof fetchOptions?.id === 'string' || fetchOptions?.id instanceof String) {
+            const event = new CustomEvent(`get_fetch_info-${fetchOptions?.id}`, { detail: info });
+            document.dispatchEvent(event);
+        }
+    }, [fetchOptions?.id, info]);
+
+    useEffect(() => {
         return () => {
             if (typeof infoRef.current.controller?.abort === 'function') {
-                if (fetchOptions?.abortOnUnmount) infoRef.current.controller.abort();
+                if (
+                    fetchOptions?.abortOnUnmount === undefined ||
+                    fetchOptions?.abortOnUnmount === true
+                ) {
+                    infoRef.current.controller.abort();
+                }
                 justUnMounted.current = true;
             }
         };

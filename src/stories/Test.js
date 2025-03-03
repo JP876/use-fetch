@@ -5,6 +5,7 @@ import useFetch, {
     useTriggerNetworkRequest,
     useFetchStatusState,
     FetchProvider,
+    useFetchInfo,
 } from '../';
 
 const getRandomNum = (min, max) => {
@@ -41,6 +42,7 @@ const FetchContainer = ({ initialFetch }) => {
         hasCatchMethod: false,
         // fetchOnce: true,
         // ignoreFirst: true,
+        id: 'test',
     });
 
     const { doFetch, error, isLoading, response, controller, handleResetError } = fetchObj;
@@ -205,6 +207,7 @@ const TestContainer = () => {
     const [initialFetch, setInitialFetch] = useState(true);
 
     const { isOnline } = useFetchStatusState();
+    const info = useFetchInfo('test');
 
     useEffect(() => {
         const handleError = (event) => {

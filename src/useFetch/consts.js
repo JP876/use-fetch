@@ -23,6 +23,7 @@ const defaultFetchOptions = {
     hasCatchMethod: false,
     fetchOnce: false,
     ignoreFirst: false,
+    id: null,
 };
 const defaultFetchProviderOptions = {
     networkErrorMessages: defaultNetworkErrorMessages,
