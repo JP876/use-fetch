@@ -2,6 +2,7 @@ import {
     FetchProvider,
     useFetchStatusState,
     useFetchDispatch,
+    useInitialFetchOptions,
 } from './fetchContetxt/useFetchContext';
 import useFetch from './useFetch';
 import useTriggerNetworkRequest from './useFetch/hooks/useTriggerNetworkRequest';
@@ -16,6 +17,7 @@ export {
     FetchProvider,
     useFetchStatusState,
     useFetchDispatch,
+    useInitialFetchOptions,
     useTriggerNetworkRequest,
     useFetchInfo,
     defaultFetchOptions,
