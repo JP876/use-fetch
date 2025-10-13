@@ -22,14 +22,20 @@ export const FetchProvider = ({ options = defaultFetchProviderOptions, children 
         setIsOnline(false);
     }, []);
 
-    const handleDefaultFetchOptions = useCallback((options) => {
-        setFetchOptions((prevValue) => ({ ...(prevValue || {}), ...options }));
+    const updateDefaultFetchOptions = useCallback((options) => {
+        setFetchOptions((prevValue) => {
+            let nextValue = options;
+            if (typeof options === 'function') {
+                nextValue = options(prevValue || {});
+            }
+            return { ...prevValue, ...(nextValue || {}) };
+        });
     }, []);
 
     const stateValue = useMemo(() => ({ isOnline }), [isOnline]);
     const dispatchValue = useMemo(
-        () => ({ setIsOnline, handleDefaultFetchOptions }),
-        [handleDefaultFetchOptions]
+        () => ({ setIsOnline, updateDefaultFetchOptions }),
+        [updateDefaultFetchOptions]
     );
 
     const optionsValue = useMemo(() => {
