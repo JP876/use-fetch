@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import consts from '../consts';
 
 const useFetchInfo = (id) => {
@@ -11,7 +11,9 @@ const useFetchInfo = (id) => {
             document.addEventListener(
                 `get_fetch_info-${id}`,
                 (e) => {
-                    if (e?.detail) setInfo(e.detail);
+                    if (e?.detail) {
+                        setInfo(e.detail);
+                    }
                 },
                 { signal: controller.signal }
             );
@@ -22,7 +24,7 @@ const useFetchInfo = (id) => {
         }
     }, [id]);
 
-    return { ...info };
+    return useMemo(() => ({ ...(info || {}) }), [info]);
 };
 
 export default useFetchInfo;

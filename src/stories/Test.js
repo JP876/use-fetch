@@ -6,6 +6,7 @@ import useFetch, {
     useFetchStatusState,
     FetchProvider,
     useFetchInfo,
+    useFetchDispatch,
 } from '../';
 
 const getRandomNum = (min, max) => {
@@ -207,7 +208,10 @@ const TestContainer = () => {
     const [initialFetch, setInitialFetch] = useState(true);
 
     const { isOnline } = useFetchStatusState();
+    // const { handleDefaultFetchOptions } = useFetchDispatch();
+
     const info = useFetchInfo('test');
+    console.log(info);
 
     useEffect(() => {
         const handleError = (event) => {

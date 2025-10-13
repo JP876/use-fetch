@@ -75,7 +75,7 @@ const useFetch = (fetchOptions = defaultFetchOptions) => {
     );
 
     const doFetch = useCallback(
-        (options) => {
+        async (options) => {
             if (fetchOptions?.fetchOnce && fetchOptions?.ignoreFirst) {
                 console.warn(
                     'The fetch options fetchOnce and ignoreFirst cannot both be set to true simultaneously.'

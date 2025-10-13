@@ -5,21 +5,32 @@ const FetchContextState = createContext();
 const FetchContextDispatch = createContext();
 const FetchOptions = createContext();
 
+const InitialFetchOptions = createContext();
+
 export const useFetchStatusState = () => useContext(FetchContextState);
 export const useFetchDispatch = () => useContext(FetchContextDispatch);
 export const useFetchOptions = () => useContext(FetchOptions);
+export const useInitialFetchOptions = () => useContext(InitialFetchOptions);
 
 const { defaultFetchProviderOptions } = consts;
 
 export const FetchProvider = ({ options = defaultFetchProviderOptions, children }) => {
     const [isOnline, setIsOnline] = useState(true);
+    const [fetchOptions, setFetchOptions] = useState({});
 
     const handleConfirmIsOnline = useCallback((err) => {
         setIsOnline(false);
     }, []);
 
+    const handleDefaultFetchOptions = useCallback((options) => {
+        setFetchOptions((prevValue) => ({ ...(prevValue || {}), ...options }));
+    }, []);
+
     const stateValue = useMemo(() => ({ isOnline }), [isOnline]);
-    const dispatchValue = useMemo(() => ({ setIsOnline }), []);
+    const dispatchValue = useMemo(
+        () => ({ setIsOnline, handleDefaultFetchOptions }),
+        [handleDefaultFetchOptions]
+    );
 
     const optionsValue = useMemo(() => {
         return { handleConfirmIsOnline, providerOptions: options };
@@ -29,7 +40,9 @@ export const FetchProvider = ({ options = defaultFetchProviderOptions, children 
         <FetchOptions.Provider value={optionsValue}>
             <FetchContextState.Provider value={stateValue}>
                 <FetchContextDispatch.Provider value={dispatchValue}>
-                    {children}
+                    <InitialFetchOptions.Provider value={fetchOptions}>
+                        {children}
+                    </InitialFetchOptions.Provider>
                 </FetchContextDispatch.Provider>
             </FetchContextState.Provider>
         </FetchOptions.Provider>
