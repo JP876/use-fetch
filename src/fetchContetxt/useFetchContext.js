@@ -22,7 +22,7 @@ export const FetchProvider = ({ options = defaultFetchProviderOptions, children 
         setIsOnline(false);
     }, []);
 
-    const updateDefaultFetchOptions = useCallback((options) => {
+    const updateInitialFetchOptions = useCallback((options) => {
         setFetchOptions((prevValue) => {
             let nextValue = options;
             if (typeof options === 'function') {
@@ -34,8 +34,8 @@ export const FetchProvider = ({ options = defaultFetchProviderOptions, children 
 
     const stateValue = useMemo(() => ({ isOnline }), [isOnline]);
     const dispatchValue = useMemo(
-        () => ({ setIsOnline, updateDefaultFetchOptions }),
-        [updateDefaultFetchOptions]
+        () => ({ setIsOnline, updateInitialFetchOptions }),
+        [updateInitialFetchOptions]
     );
 
     const optionsValue = useMemo(() => {

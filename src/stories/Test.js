@@ -81,6 +81,7 @@ const FetchContainer = ({ initialFetch }) => {
                         return new Promise((res) => res()).then(async () => {
                             const reqRes = await triggerNetworkRequest(fetchUrls.todos, {
                                 signal: controller?.signal,
+                                method: 'GET',
                             });
 
                             if (!reqRes?.ok) throw new APIError('Message', reqRes);
@@ -95,7 +96,10 @@ const FetchContainer = ({ initialFetch }) => {
                     // type options: 'all' || 'allSettled'
                     // default type: 'allSettled'
                     // type: 'all',
-                    reqs: [{ url: fetchUrls.posts }, { url: fetchUrls.users }],
+                    reqs: [
+                        { url: fetchUrls.posts, options: { method: 'GET' } },
+                        { url: fetchUrls.users, options: { method: 'GET' } },
+                    ],
                 },
                 {
                     // id: 'after-reqs',
@@ -107,13 +111,18 @@ const FetchContainer = ({ initialFetch }) => {
                             return;
                         }
 
-                        let randomUser = users[getRandomNum(0, users?.length)];
+                        let randomUser = users[getRandomNum(1, users?.length)];
                         // if (!randomUser?.id) randomUser = { id: 1 };
 
                         return [
                             {
                                 id: 'randomUser',
                                 url: `${fetchUrls.users}/${randomUser?.id || 0}`,
+                                options: {
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                },
                             },
                             {
                                 func: (user) => {
@@ -157,13 +166,13 @@ const FetchContainer = ({ initialFetch }) => {
                 },
             ])
                 .then((result) => {
-                    console.log('Then');
-                    console.log(result);
+                    // console.log('Then');
+                    // console.log(result);
                 })
                 .catch((err) => {
                     // catch runs if catchHandlerPassed was passed as true to useFetch
-                    console.log('Catch');
-                    console.log(err);
+                    // console.log('Catch');
+                    // console.log(err);
                 });
         },
         [doFetch, triggerNetworkRequest]
@@ -208,10 +217,9 @@ const TestContainer = () => {
     const [initialFetch, setInitialFetch] = useState(true);
 
     const { isOnline } = useFetchStatusState();
-    // const { handleDefaultFetchOptions } = useFetchDispatch();
+    const { updateInitialFetchOptions } = useFetchDispatch();
 
     const info = useFetchInfo('test');
-    console.log(info);
 
     useEffect(() => {
         const handleError = (event) => {
@@ -243,6 +251,19 @@ const TestContainer = () => {
                 >
                     <button onClick={() => setMount((prevValue) => !prevValue)}>
                         {mount ? 'Unmount' : 'Mount'}
+                    </button>
+
+                    <button
+                        onClick={() =>
+                            updateInitialFetchOptions({
+                                // method: 'POST',
+                                headers: {
+                                    Authorization: `Bearer ${Math.random().toFixed(2) * 10}`,
+                                },
+                            })
+                        }
+                    >
+                        Update Initial Options
                     </button>
 
                     <div style={{ display: 'flex', alignItems: 'center' }}>
