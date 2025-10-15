@@ -1,6 +1,6 @@
 {
     "name": "@josipp/use-fetch",
-    "version": "2.2.7",
+    "version": "2.2.8",
     "description": "Simple useFetch hook for sequential requests",
     "main": "dist/main.js",
     "module": "dist/index.es.js",
