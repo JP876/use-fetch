@@ -34,9 +34,6 @@ const useTriggerNetworkRequest = () => {
                     updateFinalOptions(initialOptions);
                 }
 
-                console.log(options);
-                console.log(finalOptions);
-
                 return await fetch(url, finalOptions);
             } catch (err) {
                 return handleCatch(err, url);
